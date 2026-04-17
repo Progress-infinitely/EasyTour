@@ -206,6 +206,8 @@ class StructuredAnswerNode(BaseNode):
     def _build_citations(self, docs: list[dict[str, Any]]) -> list[dict[str, Any]]:
         citations: list[dict[str, Any]] = []
         for doc in docs:
+            # [修改] 引用补充来源类型/网页链接/chunk_id，前端才能区分网页跳转和本地命中片段预览。
+            source_type = 'web_search' if str(doc.get('retrieval_source') or '').strip() == 'web_search' else 'document'
             citation = {
                 'source_label_display': str(
                     doc.get('source_label_display') or doc.get('file_title') or doc.get('title') or ''
@@ -213,8 +215,14 @@ class StructuredAnswerNode(BaseNode):
                 'item_name': str(doc.get('item_name') or doc.get('primary_item_name') or ''),
                 'city': str(doc.get('city') or ''),
                 'document_id': str(doc.get('document_id') or ''),
+                'source_type': source_type,
+                'source_url': str(doc.get('url') or ''),
+                'chunk_id': str(doc.get('chunk_id') or ''),
             }
-            if not any(value for value in citation.values()):
+            if not any(
+                citation.get(field)
+                for field in ('source_label_display', 'item_name', 'city', 'document_id', 'source_url', 'chunk_id')
+            ):
                 continue
             citations.append(citation)
         return citations

@@ -629,23 +629,40 @@
         return `${label}${city}`;
     }
 
-    async function openCitationDocument(citation) {
+    function openInNewTab(url) {
+        const popup = window.open(url, "_blank", "noopener,noreferrer");
+        if (!popup) {
+            window.location.href = url;
+        }
+    }
+
+    function openCitationDocument(citation) {
+        // [修改] 联网引用直接打开网页；本地知识库引用打开命中 chunk 的预览页。
+        const sourceType = String(citation?.source_type || "").trim();
+        const sourceUrl = String(citation?.source_url || "").trim();
+        if (sourceType === "web_search") {
+            if (!sourceUrl) {
+                throw new Error("这个联网引用没有可打开的网页链接。");
+            }
+            openInNewTab(normalizeUrl(sourceUrl));
+            return;
+        }
+
         const documentId = String(citation?.document_id || "").trim();
         if (!documentId) {
+            if (sourceUrl) {
+                openInNewTab(normalizeUrl(sourceUrl));
+                return;
+            }
             throw new Error("这个引用没有关联到可打开的文档。");
         }
-        const response = await fetch(`${API_BASE}/documents/${encodeURIComponent(documentId)}/open`, {
-            method: "POST"
-        });
-        if (response.ok) return;
-        let message = "打开引用源失败";
-        try {
-            const data = await response.json();
-            message = data.detail || data.message || message;
-        } catch (_) {
-            // ignore
+
+        const chunkId = String(citation?.chunk_id || "").trim();
+        const previewUrl = new URL(`${API_BASE}/documents/${encodeURIComponent(documentId)}/preview`, window.location.origin);
+        if (chunkId) {
+            previewUrl.searchParams.set("chunk_id", chunkId);
         }
-        throw new Error(message);
+        openInNewTab(previewUrl.toString());
     }
 
     function createCitationPill(citation, index, variant = "inline") {
@@ -655,9 +672,9 @@
         button.dataset.variant = variant;
         button.textContent = `[${index}]`;
         button.title = `打开来源：${getCitationLabel(citation)}`;
-        button.addEventListener("click", async () => {
+        button.addEventListener("click", () => {
             try {
-                await openCitationDocument(citation);
+                openCitationDocument(citation);
             } catch (error) {
                 window.alert(error.message || "打开引用失败");
             }
@@ -695,11 +712,15 @@
     function groupCitationsBySource(citations) {
         const groups = new Map();
         normalizeCitations(citations).forEach((citation, index) => {
+            // [修改] 分组粒度细化到可点击目标，避免同文档不同 chunk 被错误合并。
             const key = [
                 citation.source_label_display || "",
                 citation.item_name || "",
                 citation.city || "",
-                citation.document_id || ""
+                citation.document_id || "",
+                citation.source_type || "",
+                citation.source_url || "",
+                citation.chunk_id || ""
             ].join("||");
             if (!groups.has(key)) {
                 groups.set(key, { citation, indexes: [] });
@@ -836,9 +857,9 @@
             sourceButton.className = "citation-source-button";
             sourceButton.textContent = getCitationLabel(group.citation);
             sourceButton.title = `打开来源：${getCitationLabel(group.citation)}`;
-            sourceButton.addEventListener("click", async () => {
+            sourceButton.addEventListener("click", () => {
                 try {
-                    await openCitationDocument(group.citation);
+                    openCitationDocument(group.citation);
                 } catch (error) {
                     window.alert(error.message || "打开引用失败");
                 }

@@ -29,6 +29,7 @@ from easytour.services.import_file_service import ImportFileService
 from easytour.services.meta_service import MetaService
 from easytour.services.query_service import QueryService
 from easytour.utils.client.storage_clients import StorageClients
+from easytour.utils.milvus_util import fetch_chunks_by_chunk_ids
 from easytour.utils.sse_util import sse_generator
 from easytour.utils.task_util import (
     get_done_task_list,
@@ -163,12 +164,18 @@ def create_app() -> FastAPI:
     @app.get('/documents/{document_id}/preview')
     async def preview_document_chunks(
         document_id: str,
+        chunk_id: str | None = None,
         service: DocumentService = Depends(get_document_service),
     ) -> HTMLResponse:
         document = service.get_document(document_id)
         if document is None:
             return HTMLResponse(_build_preview_not_found_html(document_id), status_code=404)
-        return HTMLResponse(_build_preview_html(document))
+        preview_document = _prepare_preview_document(
+            document,
+            chunk_id=chunk_id,
+            chunks_collection=str(service._chunks_collection),
+        )
+        return HTMLResponse(_build_preview_html(preview_document, chunk_id=chunk_id))
 
     @app.get('/documents/{document_id}')
     async def get_document(
@@ -317,7 +324,7 @@ def create_app() -> FastAPI:
     return app
 
 
-def _build_preview_html(document: dict) -> str:
+def _build_preview_html(document: dict, chunk_id: str | None = None) -> str:
     import json as _json
 
     title = document.get('document_title') or document.get('file_title') or '文档预览'
@@ -329,12 +336,27 @@ def _build_preview_html(document: dict) -> str:
     }
     content_type = content_type_map.get(document.get('content_type') or '', document.get('content_type') or '')
     chunks = document.get('chunks_snapshot') or []
+    # [修改] 支持按 chunk_id 过滤，只展示当前引用真正命中的那一段。
+    selected_chunk_id = str(chunk_id or '').strip()
     chunks_data = [
-        {'title': str(c.get('title') or c.get('parent_title') or ''), 'content': str(c.get('content') or '')}
-        for c in chunks if c.get('content')
+        {
+            'title': str(c.get('title') or c.get('parent_title') or ''),
+            'content': str(c.get('content') or ''),
+            'chunk_id': str(c.get('chunk_id') or ''),
+        }
+        for c in chunks
+        if c.get('content') and (not selected_chunk_id or str(c.get('chunk_id') or '') == selected_chunk_id)
     ]
     doc_json = _json.dumps(
-        {'title': title, 'city': city, 'region': region_path, 'type': content_type, 'chunks': chunks_data},
+        {
+            'title': title,
+            'city': city,
+            'region': region_path,
+            'type': content_type,
+            'preview_scope': 'chunk' if selected_chunk_id else 'document',
+            'empty_message': '没有找到对应的命中片段' if selected_chunk_id else '暂无可预览的内容',
+            'chunks': chunks_data,
+        },
         ensure_ascii=False,
     )
     return f'''<!DOCTYPE html>
@@ -368,7 +390,8 @@ body {{ font-family: "Inter", "Noto Sans SC", sans-serif; background: #f4f7fc; }
 <div class="mx-auto max-w-3xl">
   <div class="mb-6 rounded-2xl bg-white p-6 shadow-sm border border-slate-100">
     <div class="flex items-start gap-4">
-      <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-900 to-blue-700 text-white font-bold text-lg">ET</div>
+      <!-- [修改] 预览页头部改成复用项目 logo，不再显示占位 ET 方块。 -->
+      <img src="/logo.png" alt="EasyTour Logo" class="h-12 w-12 shrink-0 rounded-xl object-cover" />
       <div class="flex-1 min-w-0">
         <h1 class="text-xl font-bold text-slate-900 break-words" id="doc-title"></h1>
         <div class="mt-2 flex flex-wrap gap-2" id="doc-meta"></div>
@@ -390,16 +413,17 @@ const meta = $("doc-meta");
 }});
 const container = $("chunks-container");
 if (!DATA.chunks.length) {{
-  container.innerHTML = '<p class="text-center text-slate-400 py-8">暂无可预览的内容</p>';
+  container.innerHTML = `<p class="text-center text-slate-400 py-8">${{DATA.empty_message}}</p>`;
 }} else {{
   DATA.chunks.forEach((chunk, i) => {{
     const card = document.createElement("div");
     card.className = "rounded-2xl bg-white p-6 shadow-sm border border-slate-100";
     let html = "";
+    const blockLabel = DATA.preview_scope === "chunk" ? "命中片段" : `段落 ${{i+1}}`;
     if (chunk.title) {{
-      html += `<div class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">段落 ${{i+1}} · ${{chunk.title}}</div>`;
+      html += `<div class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">${{blockLabel}} · ${{chunk.title}}</div>`;
     }} else {{
-      html += `<div class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">段落 ${{i+1}}</div>`;
+      html += `<div class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">${{blockLabel}}</div>`;
     }}
     html += `<div class="prose text-sm text-slate-700">${{marked.parse(chunk.content)}}</div>`;
     card.innerHTML = html;
@@ -409,6 +433,65 @@ if (!DATA.chunks.length) {{
 </script>
 </body>
 </html>'''
+
+
+def _prepare_preview_document(
+    document: dict[str, object],
+    *,
+    chunk_id: str | None,
+    chunks_collection: str,
+) -> dict[str, object]:
+    preview_document = dict(document)
+    selected_chunk_id = str(chunk_id or '').strip()
+    if not selected_chunk_id:
+        return preview_document
+
+    chunks = list(document.get('chunks_snapshot') or [])
+    matched_snapshot = [
+        chunk
+        for chunk in chunks
+        if chunk.get('content') and str(chunk.get('chunk_id') or '') == selected_chunk_id
+    ]
+    if matched_snapshot:
+        preview_document['chunks_snapshot'] = matched_snapshot
+        return preview_document
+
+    # [修改] 兼容历史文档：老快照里可能没有 chunk_id，兜底去 Milvus 按 chunk_id 直接捞命中片段。
+    fallback_chunk = _fetch_preview_chunk_from_milvus(
+        chunk_id=selected_chunk_id,
+        document_id=str(document.get('document_id') or ''),
+        chunks_collection=chunks_collection,
+    )
+    preview_document['chunks_snapshot'] = [fallback_chunk] if fallback_chunk else []
+    return preview_document
+
+
+def _fetch_preview_chunk_from_milvus(
+    *,
+    chunk_id: str,
+    document_id: str,
+    chunks_collection: str,
+) -> dict[str, str] | None:
+    lookup_id: int | str = int(chunk_id) if chunk_id.isdigit() else chunk_id
+    rows = fetch_chunks_by_chunk_ids(
+        chunks_collection,
+        [lookup_id],
+        output_fields=['chunk_id', 'document_id', 'content', 'title', 'parent_title'],
+    )
+    for row in rows:
+        row_document_id = str(row.get('document_id') or '')
+        if document_id and row_document_id and row_document_id != document_id:
+            continue
+        content = str(row.get('content') or '').strip()
+        if not content:
+            continue
+        return {
+            'chunk_id': str(row.get('chunk_id') or chunk_id),
+            'title': str(row.get('title') or row.get('parent_title') or ''),
+            'parent_title': str(row.get('parent_title') or ''),
+            'content': content,
+        }
+    return None
 
 
 def _build_preview_not_found_html(document_id: str) -> str:

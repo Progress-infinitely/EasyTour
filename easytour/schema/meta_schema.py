@@ -38,6 +38,9 @@ class CitationModel(BaseModel):
     item_name: str = Field(default='', description='命中的主体名称')
     city: str = Field(default='', description='命中的城市')
     document_id: str = Field(default='', description='来源文档 ID')
+    source_type: str = Field(default='document', description='来源类型：document / web_search')
+    source_url: str = Field(default='', description='在线来源链接，仅 web_search 使用')
+    chunk_id: str = Field(default='', description='命中的 chunk ID，仅本地文档引用使用')
 
 
 class MetaOption(BaseModel):

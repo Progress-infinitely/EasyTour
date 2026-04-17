@@ -123,7 +123,11 @@ class DocumentService:
         existing = self.get_document(str(document.get('document_id') or ''))
         if existing is not None:
             self._delete_collection_rows(str(document.get('document_id') or ''))
-        self._insert_collection_rows(copy.deepcopy(document.get('chunks_snapshot') or []))
+        # [修改] 插入 Milvus 生成的 chunk_id 需要写回 chunks_snapshot，否则后续按 chunk_id 预览会找不到。
+        inserted_snapshot = copy.deepcopy(document.get('chunks_snapshot') or [])
+        self._insert_collection_rows(inserted_snapshot)
+        document['chunks_snapshot'] = inserted_snapshot
+        document['chunk_count'] = len(inserted_snapshot)
         return self.upsert_document(document)
 
     def apply_metadata_only(self, document_id: str, overrides: dict[str, Any]) -> dict[str, Any]:
@@ -171,6 +175,8 @@ class DocumentService:
         current = self.get_document(document_id)
         if current is None:
             self._insert_collection_rows(new_snapshot)
+            new_document['chunks_snapshot'] = new_snapshot
+            new_document['chunk_count'] = len(new_snapshot)
             return self.upsert_document(new_document)
 
         staged = copy.deepcopy(current)
@@ -189,6 +195,9 @@ class DocumentService:
             self.upsert_document(current)
             raise
 
+        # [修改] reindex 成功后也要把 Milvus 返回的 chunk_id 同步回文档快照。
+        new_document['chunks_snapshot'] = new_snapshot
+        new_document['chunk_count'] = len(new_snapshot)
         new_document['rollback_snapshot'] = None
         new_document['pending_chunks_snapshot'] = None
         return self.upsert_document(new_document)
