@@ -97,6 +97,9 @@ class QueryService:
             set_task_result(task_id, 'item_names', list(final_state.get('item_names') or []))
             set_task_result(task_id, 'structured_answer', dict(final_state.get('structured_answer') or {}))
             set_task_result(task_id, 'citations', citations)
+            set_task_result(task_id, 'retrieval_type', str(final_state.get('retrieval_type') or retrieval_type or ''))
+            set_task_result(task_id, 'answer_intent', str(final_state.get('answer_intent') or ''))
+            set_task_result(task_id, 'region', dict(final_state.get('region_filter') or {}))
 
             if is_stream:
                 push_sse_event(
@@ -106,6 +109,9 @@ class QueryService:
                         'answer': answer,
                         'image_urls': list(final_state.get('image_urls') or []),
                         'citations': citations,
+                        'retrieval_type': str(final_state.get('retrieval_type') or retrieval_type or ''),
+                        'answer_intent': str(final_state.get('answer_intent') or ''),
+                        'region': dict(final_state.get('region_filter') or {}),
                     },
                 )
             return final_state

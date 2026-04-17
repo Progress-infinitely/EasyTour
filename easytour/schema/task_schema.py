@@ -20,4 +20,7 @@ class TaskStatusResponse(BaseModel):
     chunk_count: int = Field(default=0, description='Chunk count')
     document_id: str = Field(default='', description='Document ID')
     region_path: str = Field(default='', description='Region path')
+    retrieval_type: str = Field(default='', description='Effective retrieval type')
+    answer_intent: str = Field(default='', description='Effective answer intent')
+    region: dict[str, str] = Field(default_factory=dict, description='Effective region filter')
     doc_main_entities: list[dict[str, Any]] = Field(default_factory=list, description='Main entities')

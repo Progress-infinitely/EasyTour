@@ -35,10 +35,75 @@ class IntentRouteNode(BaseNode):
         preset_region_filter = dict(state.get('region_filter') or {})
         if preset_retrieval_type:
             route['retrieval_type'] = preset_retrieval_type
+            # [修改] 当前端显式选了检索类型时，短查询要强制往该类型收敛，避免“成都 + 美食”被回答成泛目的地推荐。
+            route = self._apply_preset_type_focus(route, original_query=original_query, preset_retrieval_type=preset_retrieval_type)
         if any(str(preset_region_filter.get(key) or '').strip() for key in ('province', 'city', 'region_path')):
             route['region_filter'] = preset_region_filter
 
         return route
+
+    def _apply_preset_type_focus(
+        self,
+        route: QueryGraphState,
+        *,
+        original_query: str,
+        preset_retrieval_type: str,
+    ) -> QueryGraphState:
+        focused_route = dict(route)
+        current_intent = str(focused_route.get('answer_intent') or '').strip()
+        current_rewritten_query = str(focused_route.get('rewritten_query') or original_query).strip() or original_query
+
+        if self._needs_type_focus(original_query, current_intent):
+            focused_route['answer_intent'] = self._default_answer_intent_for_type(preset_retrieval_type)
+            focused_route['rewritten_query'] = self._rewrite_query_for_type_focus(
+                current_rewritten_query,
+                preset_retrieval_type=preset_retrieval_type,
+            )
+        return focused_route
+
+    @staticmethod
+    def _needs_type_focus(query: str, answer_intent: str) -> bool:
+        normalized_query = str(query or '').strip()
+        if not normalized_query:
+            return False
+        if answer_intent and answer_intent != AnswerIntent.GENERIC.value:
+            return False
+        # [修改] 只对“成都 / 三亚 / 春熙路”这类短而泛的问题加类型聚焦，避免误伤已表达明确意图的问句。
+        return len(normalized_query) <= 12
+
+    @staticmethod
+    def _default_answer_intent_for_type(retrieval_type: str) -> str:
+        type_to_intent = {
+            ContentType.ROUTE.value: AnswerIntent.PLANNING.value,
+            ContentType.TRANSPORT.value: AnswerIntent.HOWTO.value,
+            ContentType.ATTRACTION.value: AnswerIntent.RECOMMENDATION.value,
+            ContentType.HOTEL.value: AnswerIntent.RECOMMENDATION.value,
+            ContentType.FOOD.value: AnswerIntent.RECOMMENDATION.value,
+            ContentType.CULTURE.value: AnswerIntent.RECOMMENDATION.value,
+        }
+        return type_to_intent.get(str(retrieval_type or '').strip(), AnswerIntent.GENERIC.value)
+
+    @staticmethod
+    def _rewrite_query_for_type_focus(query: str, *, preset_retrieval_type: str) -> str:
+        normalized_query = str(query or '').strip()
+        if not normalized_query:
+            return query
+
+        suffix_map = {
+            ContentType.ATTRACTION.value: '有哪些值得去的景点？',
+            ContentType.ROUTE.value: '适合怎么安排行程？',
+            ContentType.HOTEL.value: '住哪里比较合适？',
+            ContentType.FOOD.value: '有什么值得推荐的美食？',
+            ContentType.TRANSPORT.value: '交通怎么安排更方便？',
+            ContentType.CULTURE.value: '有哪些值得体验的文化内容？',
+        }
+        suffix = suffix_map.get(str(preset_retrieval_type or '').strip())
+        if not suffix:
+            return normalized_query
+
+        if normalized_query.endswith(('？', '?', '。', '.', '！', '!')):
+            normalized_query = normalized_query[:-1].strip()
+        return f'{normalized_query}{suffix}'
 
     def _route_with_llm(self, query: str, history: list[dict[str, Any]]) -> QueryGraphState | None:
         try:

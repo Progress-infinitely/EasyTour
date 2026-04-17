@@ -630,6 +630,7 @@
 
     let activeRetrievalType = "";
     let isSending = false;
+    let lastEffectiveScope = null;
 
     if (window.marked?.setOptions) {
         // [修改] 让答案正文按 Markdown 渲染，保留常用 GFM 语法和换行表现。
@@ -688,6 +689,96 @@
         return streamToggle.dataset.on === "true";
     }
 
+    function formatRetrievalTypeLabel(typeValue) {
+        const normalized = String(typeValue || "").trim();
+        return CONTENT_TYPE_LABELS[normalized] || normalized || "不限";
+    }
+
+    function getSelectedRegionLabel() {
+        if (!filterRegion.value) return "";
+        const selected = filterRegion.options[filterRegion.selectedIndex];
+        return String(selected?.textContent || filterRegion.value || "").trim();
+    }
+
+    function getEffectiveRegionLabel(region) {
+        if (!region || typeof region !== "object") return "";
+        const city = String(region.city || "").trim();
+        if (city) return city;
+        const regionPath = String(region.region_path || "").trim();
+        if (regionPath) return regionPath;
+        return String(region.province || "").trim();
+    }
+
+    function syncRegionFilterWithEffectiveScope(region) {
+        if (!region || typeof region !== "object") return false;
+
+        const regionPath = String(region.region_path || "").trim();
+        const city = String(region.city || "").trim();
+        const province = String(region.province || "").trim();
+        const options = Array.from(filterRegion.options || []);
+        if (!options.length) return false;
+
+        const exactCandidates = new Set([regionPath, city, province].filter(Boolean));
+        for (const option of options) {
+            const value = String(option.value || "").trim();
+            const label = String(option.textContent || "").trim();
+            if (!value) continue;
+            if (exactCandidates.has(value) || exactCandidates.has(label)) {
+                filterRegion.value = value;
+                return true;
+            }
+        }
+
+        if (city) {
+            const fuzzyCityMatch = options.find((option) => {
+                const value = String(option.value || "").trim();
+                const label = String(option.textContent || "").trim();
+                return value === city
+                    || label === city
+                    || value.endsWith(`/${city}`)
+                    || label.endsWith(`/${city}`);
+            });
+            if (fuzzyCityMatch) {
+                filterRegion.value = String(fuzzyCityMatch.value || "").trim();
+                return true;
+            }
+        }
+
+        if (province) {
+            const fuzzyProvinceMatch = options.find((option) => {
+                const value = String(option.value || "").trim();
+                const label = String(option.textContent || "").trim();
+                return value === province
+                    || label === province
+                    || value.startsWith(`${province}/`)
+                    || label.startsWith(`${province}/`);
+            });
+            if (fuzzyProvinceMatch) {
+                filterRegion.value = String(fuzzyProvinceMatch.value || "").trim();
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    function applyEffectiveScope(meta) {
+        const retrievalType = String(meta?.retrieval_type || "").trim();
+        const region = meta?.region && typeof meta.region === "object" ? meta.region : {};
+        const effectiveRegionLabel = getEffectiveRegionLabel(region);
+        if (!retrievalType && !effectiveRegionLabel) {
+            lastEffectiveScope = null;
+        } else {
+            lastEffectiveScope = {
+                retrievalType,
+                region
+            };
+            // [修改] 后端已经识别出地区时，把前端地区筛选同步到最接近的选项，后续追问会沿用这个范围。
+            syncRegionFilterWithEffectiveScope(region);
+        }
+        updateScopeHint();
+    }
+
     function updateTypeChipStyles() {
         typeChipButtons.forEach((button) => {
             const isActive = button.dataset.typeChip === activeRetrievalType;
@@ -698,11 +789,25 @@
     }
 
     function updateScopeHint() {
-        const regionText = filterRegion.value ? `地区：${filterRegion.value}` : "地区：不限";
-        const typeText = activeRetrievalType ? `类型：${CONTENT_TYPE_LABELS[activeRetrievalType] || activeRetrievalType}` : "类型：不限";
+        const selectedRegionLabel = getSelectedRegionLabel();
+        const manualRegionText = selectedRegionLabel ? `地区：${selectedRegionLabel}` : "地区：不限";
+        const manualTypeText = activeRetrievalType ? `类型：${formatRetrievalTypeLabel(activeRetrievalType)}` : "类型：不限";
+        const effectiveRegionLabel = lastEffectiveScope ? getEffectiveRegionLabel(lastEffectiveScope.region) : "";
+        const displayedRegionLabel = effectiveRegionLabel || selectedRegionLabel;
+        const displayedRetrievalType = String(lastEffectiveScope?.retrievalType || "").trim() || activeRetrievalType;
+        const regionText = displayedRegionLabel ? `地区：${displayedRegionLabel}` : "地区：不限";
+        const typeText = displayedRetrievalType ? `类型：${formatRetrievalTypeLabel(displayedRetrievalType)}` : "类型：不限";
         const streamText = isStreamEnabled() ? "回答方式：流式" : "回答方式：一次性";
-        scopeHint.textContent = `${typeText} · ${regionText}`;
-        scopeSummary.textContent = `当前检索范围是 ${typeText}，${regionText}，${streamText}。`;
+        scopeHint.textContent = `${lastEffectiveScope ? "当前生效" : "当前筛选"} · ${typeText} · ${regionText}`;
+
+        let summary = `当前手动筛选是 ${manualTypeText}，${manualRegionText}，${streamText}。`;
+        if (lastEffectiveScope) {
+            const effectiveTypeText = `类型：${formatRetrievalTypeLabel(lastEffectiveScope.retrievalType)}`;
+            const effectiveRegionLabel = getEffectiveRegionLabel(lastEffectiveScope.region);
+            const effectiveRegionText = effectiveRegionLabel ? `地区：${effectiveRegionLabel}` : "地区：不限";
+            summary += ` 最近一次后端识别并实际生效的是 ${effectiveTypeText}，${effectiveRegionText}。`;
+        }
+        scopeSummary.textContent = summary;
     }
 
     function setActiveRetrievalType(nextType) {
@@ -1173,6 +1278,7 @@
             if (finished) return;
             finished = true;
             eventSource.close();
+            applyEffectiveScope(payload || {});
             finalizeBotAnswer(
                 messageEl,
                 payload.answer || rawAnswer,
@@ -1242,7 +1348,8 @@
         if (!queryText || isSending) return;
 
         setSendingState(true);
-        heroInput.value = "";
+        // [修改] 顶部搜索框保留最近一次提交的问题，方便用户继续改字重搜。
+        heroInput.value = queryText;
         chatInput.value = "";
         addUserMessage(queryText);
         const botMessage = createBotMessageShell();
@@ -1252,6 +1359,7 @@
             renderProgress(botMessage, data.done_list || [], [], isStreamEnabled() ? "pending" : "completed");
 
             if (!isStreamEnabled()) {
+                applyEffectiveScope(data);
                 finalizeBotAnswer(botMessage, data.answer || "", data.error || "", data.image_urls || [], data.citations || []);
                 setSendingState(false);
                 scrollToBottom();
@@ -1304,6 +1412,11 @@
                 option.textContent = item.label;
                 filterRegion.appendChild(option);
             });
+            if (lastEffectiveScope) {
+                // [修改] 地区选项异步加载完成后，再补一次回填，避免识别结果先到了、下拉选项后到的时序问题。
+                syncRegionFilterWithEffectiveScope(lastEffectiveScope.region);
+                updateScopeHint();
+            }
         } catch (_) {
             // ignore region loading failure
         }
@@ -1356,6 +1469,8 @@
                 </div>
             </div>
         `;
+        lastEffectiveScope = null;
+        updateScopeHint();
         chatInput.focus();
         scrollToBottom();
     });

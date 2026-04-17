@@ -20,8 +20,10 @@ class StructuredAnswerNode(BaseNode):
         query = str(state.get('rewritten_query') or state.get('original_query') or '').strip()
         docs = list(state.get('reranked_docs') or [])
         answer_intent = str(state.get('answer_intent') or AnswerIntent.GENERIC.value)
+        retrieval_type = str(state.get('retrieval_type') or '').strip()
         prompt = self._build_prompt(
             answer_intent=answer_intent,
+            retrieval_type=retrieval_type,
             query=query,
             item_names=state.get('item_names') or [],
             history=state.get('history') or [],
@@ -51,6 +53,9 @@ class StructuredAnswerNode(BaseNode):
                     'answer': answer,
                     'structured': structured_answer,
                     'citations': citations,
+                    'retrieval_type': retrieval_type,
+                    'answer_intent': answer_intent,
+                    'region': dict(state.get('region_filter') or {}),
                 },
             )
 
@@ -105,6 +110,7 @@ class StructuredAnswerNode(BaseNode):
         self,
         *,
         answer_intent: str,
+        retrieval_type: str,
         query: str,
         item_names: list[str],
         history: list[dict[str, Any]],
@@ -112,6 +118,7 @@ class StructuredAnswerNode(BaseNode):
     ) -> str:
         intent_instruction = get_intent_instruction(answer_intent)
         return ANSWER_PROMPT.format(
+            retrieval_focus=self._build_retrieval_focus_instruction(retrieval_type),
             answer_intent=answer_intent,
             intent_instruction=intent_instruction,
             history=self._format_history(history),
@@ -202,6 +209,18 @@ class StructuredAnswerNode(BaseNode):
             return {'answer': answer, 'steps': [], 'tips': all_tips[:5]}
 
         return {'answer': answer}
+
+    @staticmethod
+    def _build_retrieval_focus_instruction(retrieval_type: str) -> str:
+        focus_map = {
+            'attraction': '景点：优先回答景点、片区玩法和游览体验，不要扩展成酒店或美食推荐。',
+            'route': '路线：优先回答行程安排和路线组合，不要扩展成泛目的地介绍。',
+            'hotel': '酒店：优先回答住哪里、住宿区域和酒店选择，不要扩展成景点推荐。',
+            'food': '美食：优先回答吃什么、哪里吃、觅食片区和口味建议，不要把景点当主推荐项。',
+            'transport': '交通：优先回答怎么去、怎么转场和交通方式，不要扩展成景点推荐。',
+            'culture': '文化：优先回答历史、人文、民俗和文化体验，不要扩展成泛旅游推荐。',
+        }
+        return focus_map.get(str(retrieval_type or '').strip(), '未限定：根据上下文聚焦回答。')
 
     def _build_citations(self, docs: list[dict[str, Any]]) -> list[dict[str, Any]]:
         citations: list[dict[str, Any]] = []

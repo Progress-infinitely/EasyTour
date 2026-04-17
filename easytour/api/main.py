@@ -54,6 +54,9 @@ def build_task_status_payload(task_id: str) -> dict[str, object]:
         'chunk_count': int(get_task_result(task_id, 'chunk_count', 0) or 0),
         'document_id': str(get_task_result(task_id, 'document_id', '') or ''),
         'region_path': str(get_task_result(task_id, 'region_path', '') or ''),
+        'retrieval_type': str(get_task_result(task_id, 'retrieval_type', '') or ''),
+        'answer_intent': str(get_task_result(task_id, 'answer_intent', '') or ''),
+        'region': dict(get_task_result(task_id, 'region', {}) or {}),
         'doc_main_entities': list(get_task_result(task_id, 'doc_main_entities', []) or []),
     }
 
