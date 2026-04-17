@@ -1,0 +1,18 @@
+﻿# [修改] 新仓库只保留远程高算力调用所需依赖，去掉本地高算力依赖。
+fastapi
+uvicorn
+python-multipart
+python-dotenv
+requests
+
+openai
+openai-agents
+langchain-core
+langchain-openai
+langchain-text-splitters
+langgraph
+
+minio
+pymongo
+pymilvus
+pydantic

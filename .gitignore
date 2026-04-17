@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Env
+.env
+.venv/
+venv/
+
+# IDE
+.idea/
+.vscode/
+
+# Local caches
+.playwright-cli/
+.npm-cache/
+.claude/
+
+# Runtime / temp
+# [修改] 当前项目运行时产物实际落在 easytour/temp_data/
+easytour/temp_data/
+tmp_*/
+*.log
+
+# [修改] 本地阶段备份目录，不需要进仓库
+.codex_backup_stage*/
+
+# Local documents / samples
+data/
+
+# Private markdown docs
+MVP改造技术方案.md
+需求说明.md
