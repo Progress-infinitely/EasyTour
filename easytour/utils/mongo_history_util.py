@@ -114,6 +114,7 @@ def save_chat_message(
     item_names: list[str] | None = None,
     message_id: str | None = None,
     image_urls: list[str] | None = None,
+    citations: list[dict[str, Any]] | None = None,
 ) -> str:
     """保存一条聊天消息。
 
@@ -132,6 +133,7 @@ def save_chat_message(
         'rewritten_query': rewritten_query,
         'item_names': item_names or [],
         'image_urls': image_urls or [],
+        'citations': citations or [],
         'ts': datetime.now().timestamp(),
     }
 

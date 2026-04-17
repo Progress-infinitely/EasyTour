@@ -2,641 +2,854 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <link rel="icon" href="data:,">
-    <title>文件导入服务</title>
+    <title>EasyTour 内容导入</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Noto+Sans+SC:wght@400;500;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-error-container": "#93000a",
+                        "outline-variant": "#c5c5d3",
+                        "surface-container-low": "#f3f4f6",
+                        "inverse-on-surface": "#f0f1f3",
+                        "error": "#ba1a1a",
+                        "on-secondary": "#ffffff",
+                        "surface-container-high": "#e7e8ea",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-container": "#90a8ff",
+                        "surface-tint": "#4059aa",
+                        "surface-container-highest": "#e1e2e4",
+                        "on-surface-variant": "#444651",
+                        "surface-container": "#edeef0",
+                        "secondary": "#585f6a",
+                        "secondary-container": "#dce3f0",
+                        "primary-container": "#1e3a8a",
+                        "surface-dim": "#d9dadc",
+                        "on-primary": "#ffffff",
+                        "background": "#f8f9fb",
+                        "surface-bright": "#f8f9fb",
+                        "surface": "#f8f9fb",
+                        "primary-fixed": "#dce1ff",
+                        "primary-fixed-dim": "#b6c4ff",
+                        "primary": "#00236f",
+                        "on-surface": "#191c1e",
+                        "error-container": "#ffdad6",
+                        "on-background": "#191c1e",
+                        "outline": "#757682",
+                        "success-surface": "#dbfce7",
+                        "success-text": "#166534",
+                        "warning-surface": "#fff4cf",
+                        "warning-text": "#9a6700"
+                    },
+                    borderRadius: {
+                        "xl": "0.75rem",
+                        "2xl": "1.5rem"
+                    },
+                    fontFamily: {
+                        "headline": ["Manrope", "sans-serif"],
+                        "body": ["Noto Sans SC", "sans-serif"],
+                        "label": ["Inter", "sans-serif"]
+                    }
+                }
+            }
+        };
+    </script>
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            min-height: 100vh;
-            /* 科技感背景 */
-            background-color: #0f172a;
-            background-image: radial-gradient(circle at 15% 50%, rgba(56, 189, 248, 0.08) 0%, transparent 50%),
-            radial-gradient(circle at 85% 30%, rgba(129, 140, 248, 0.08) 0%, transparent 50%),
-            linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-            background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+            font-family: "Noto Sans SC", sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(182, 196, 255, 0.35), transparent 34%),
+                radial-gradient(circle at bottom right, rgba(30, 58, 138, 0.08), transparent 30%),
+                #f8f9fb;
         }
 
-        .container {
-            width: 100%;
-            max-width: 800px;
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            padding: 30px;
-            border-radius: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            color: #e2e8f0;
+        .font-headline {
+            font-family: "Manrope", sans-serif;
         }
 
-        h1 {
-            color: #f8fafc;
-            text-align: center;
-            margin-bottom: 30px;
-            font-weight: 600;
-            letter-spacing: 1px;
-            text-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+        .font-label {
+            font-family: "Inter", sans-serif;
         }
 
-        .upload-area {
-            border: 2px dashed rgba(56, 189, 248, 0.4);
-            background: rgba(15, 23, 42, 0.4);
-            border-radius: 12px;
-            padding: 40px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-bottom: 20px;
-            position: relative;
-            overflow: hidden;
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.82);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
         }
 
-        .upload-area:hover {
-            border-color: #38bdf8;
-            background: rgba(56, 189, 248, 0.05);
-            box-shadow: inset 0 0 20px rgba(56, 189, 248, 0.1);
+        .ambient-shadow {
+            box-shadow: 0 20px 40px rgba(25, 28, 30, 0.06);
         }
 
-        .upload-icon {
-            font-size: 48px;
-            margin-bottom: 15px;
-            filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.5));
-        }
-
-        .upload-text {
-            color: #94a3b8;
-            font-size: 16px;
-        }
-
-        .file-input {
-            display: none;
-        }
-
-        .file-list {
-            margin-top: 30px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .file-item {
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            padding: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .file-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-            border-color: rgba(56, 189, 248, 0.3);
-        }
-
-        .file-info {
-            display: flex;
-            flex-direction: column;
-            flex: 1;
-            margin-right: 20px;
-        }
-
-        .file-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-
-        .file-name {
-            font-weight: 600;
-            color: #f1f5f9;
-            font-size: 16px;
-        }
-
-        .file-size {
-            font-size: 13px;
-            color: #64748b;
-        }
-
-        .status-badge {
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 600;
-            color: white;
-            min-width: 80px;
-            text-align: center;
-            letter-spacing: 0.5px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-
-        .status-uploading {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-        }
-
-        .status-processing {
-            background: linear-gradient(135deg, #3b82f6, #2563eb);
-        }
-
-        .status-completed {
-            background: linear-gradient(135deg, #10b981, #059669);
-        }
-
-        .status-error {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
-        }
-
-        .progress-wrapper {
-            margin-top: 8px;
-            display: none;
-        }
-
-        .progress-bar-container {
-            width: 100%;
-            height: 6px;
-            background-color: rgba(15, 23, 42, 0.8);
-            border-radius: 3px;
-            overflow: hidden;
-            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
-            position: relative;
-        }
-
-        .progress-bar {
-            height: 100%;
-            width: 0%;
-            border-radius: 3px;
-            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.4s;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .progress-bar::after {
+        .upload-glow::before {
             content: "";
             position: absolute;
-            top: 0;
-            left: 0;
-            bottom: 0;
-            right: 0;
-            background: linear-gradient(
-                    90deg,
-                    rgba(255, 255, 255, 0) 0%,
-                    rgba(255, 255, 255, 0.2) 50%,
-                    rgba(255, 255, 255, 0) 100%
-            );
-            animation: shimmer 2s infinite;
+            inset: -1px;
+            border-radius: inherit;
+            background: linear-gradient(135deg, rgba(0, 35, 111, 0.14), rgba(182, 196, 255, 0.24));
+            opacity: 0;
+            transition: opacity 0.25s ease;
+            z-index: 0;
         }
 
-        @keyframes shimmer {
-            0% {
-                transform: translateX(-100%);
-            }
-            100% {
-                transform: translateX(100%);
-            }
+        .upload-glow:hover::before,
+        .upload-glow.is-dragover::before {
+            opacity: 1;
         }
 
-        .progress-text {
-            font-size: 12px;
-            color: #94a3b8;
-            margin-top: 6px;
-            text-align: right;
-            font-variant-numeric: tabular-nums;
-        }
-
-        .log-details {
-            margin-top: 15px;
-            font-size: 13px;
-            color: #cbd5e1;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 8px;
-            padding: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .log-details summary {
-            cursor: pointer;
-            user-select: none;
-            color: #94a3b8;
-            outline: none;
-            display: flex;
-            align-items: center;
-            font-weight: 500;
-        }
-
-        .log-details summary:hover {
-            color: #38bdf8;
-        }
-
-        .log-details summary::marker {
-            color: #64748b;
-        }
-
-        .log-list {
-            margin: 12px 0 0 0;
-            padding: 0;
-            list-style: none;
-            max-height: 150px;
-            overflow-y: auto;
-        }
-
-        .log-list::-webkit-scrollbar {
+        .task-log::-webkit-scrollbar {
             width: 6px;
         }
 
-        .log-list::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.1);
-            border-radius: 3px;
+        .task-log::-webkit-scrollbar-thumb {
+            background: rgba(117, 118, 130, 0.3);
+            border-radius: 999px;
         }
 
-        .log-list::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 3px;
+        .task-enter {
+            animation: taskEnter 0.3s ease;
         }
 
-        .log-list::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .log-list li {
-            margin: 6px 0;
-            line-height: 1.5;
-            display: flex;
-            align-items: center;
-        }
-
-        .log-list li::before {
-            content: "•";
-            color: #38bdf8;
-            font-weight: bold;
-            display: inline-block;
-            width: 1em;
-            margin-left: -1em;
-            margin-right: 8px;
-        }
-
-        .log-done {
-            color: #a7f3d0;
-        }
-
-        .log-done::before {
-            content: "✓" !important;
-            color: #10b981 !important;
-        }
-
-        .log-running {
-            color: #bae6fd;
-            animation: pulseText 2s infinite;
-        }
-
-        .log-running::before {
-            content: "↻" !important;
-            color: #3b82f6 !important;
-            animation: spin 2s linear infinite;
-        }
-
-        @keyframes pulseText {
-            0%, 100% {
+        @keyframes taskEnter {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
                 opacity: 1;
-            }
-            50% {
-                opacity: 0.7;
-            }
-        }
-
-        @keyframes spin {
-            100% {
-                transform: rotate(360deg);
+                transform: translateY(0);
             }
         }
     </style>
 </head>
-<body>
-
-<div class="container">
-    <h1>📄 知识库文件导入</h1>
-
-    <div class="upload-area" id="dropZone" onclick="document.getElementById('fileInput').click()">
-        <div class="upload-icon">☁️</div>
-        <div class="upload-text">点击或拖拽文件到此处 (PDF/MD)</div>
-        <input type="file" id="fileInput" class="file-input"  accept=".pdf,.md">
-    </div>
-
-    <details id="overridePanel" style="margin-top:14px; background:rgba(15,23,42,0.4); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:14px 16px;">
-        <summary style="cursor:pointer; color:#94a3b8; font-size:13px; font-weight:500; outline:none;">⚙️ 可选参数（content_type / 地区 / force 模式）</summary>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px;">
-            <div>
-                <label style="font-size:12px; color:#94a3b8; display:block; margin-bottom:4px;">文档类型 (content_type)</label>
-                <select id="ov_content_type" style="width:100%; background:#1e293b; color:#e2e8f0; border:1px solid rgba(255,255,255,0.12); border-radius:6px; padding:6px 8px; font-size:13px;">
-                    <option value="">— 自动识别 —</option>
-                    <option value="attraction">景点 (attraction)</option>
-                    <option value="route">路线 (route)</option>
-                    <option value="hotel">酒店 (hotel)</option>
-                    <option value="food">美食 (food)</option>
-                    <option value="transport">交通 (transport)</option>
-                    <option value="culture">文化 (culture)</option>
-                </select>
-            </div>
-            <div>
-                <label style="font-size:12px; color:#94a3b8; display:block; margin-bottom:4px;">地区 (region)</label>
-                <input id="ov_region" type="text" placeholder="如：三亚 / 海南/三亚" style="width:100%; box-sizing:border-box; background:#1e293b; color:#e2e8f0; border:1px solid rgba(255,255,255,0.12); border-radius:6px; padding:6px 8px; font-size:13px;" />
-            </div>
-            <div>
-                <label style="font-size:12px; color:#94a3b8; display:block; margin-bottom:4px;">文档标题 (document_title)</label>
-                <input id="ov_document_title" type="text" placeholder="留空则自动提取" style="width:100%; box-sizing:border-box; background:#1e293b; color:#e2e8f0; border:1px solid rgba(255,255,255,0.12); border-radius:6px; padding:6px 8px; font-size:13px;" />
-            </div>
-            <div>
-                <label style="font-size:12px; color:#94a3b8; display:block; margin-bottom:4px;">强制模式 (force)</label>
-                <select id="ov_force" style="width:100%; background:#1e293b; color:#e2e8f0; border:1px solid rgba(255,255,255,0.12); border-radius:6px; padding:6px 8px; font-size:13px;">
-                    <option value="">— 默认（判重） —</option>
-                    <option value="metadata_only">仅更新元数据 (metadata_only)</option>
-                    <option value="reindex">强制重建索引 (reindex)</option>
-                </select>
-            </div>
+<body class="min-h-screen bg-background text-on-background pb-24">
+<!-- [修改] 顶部导航换成旅游知识库风格，并接入真实页面跳转 -->
+<header class="sticky top-0 z-50 mx-auto flex w-full max-w-screen-2xl items-center justify-between border-b border-outline-variant/15 bg-surface-container-lowest/80 px-6 py-3 text-primary shadow-[0_20px_40px_rgba(25,28,30,0.06)] backdrop-blur-md">
+    <a class="flex items-center gap-3" href="/import">
+        <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary-container text-sm font-bold text-white shadow-[0_10px_24px_rgba(0,35,111,0.18)]">ET</div>
+        <div>
+            <div class="font-headline text-lg font-extrabold tracking-tight text-primary">EasyTour</div>
+            <div class="text-xs text-secondary">Travel Knowledge Studio</div>
         </div>
-    </details>
+    </a>
 
-    <div id="fileList" class="file-list">
+    <nav class="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-8 md:flex">
+        <a class="border-b-2 border-primary pb-1 text-sm font-semibold text-primary" href="/import">导入</a>
+        <a class="border-b-2 border-transparent pb-1 text-sm font-medium text-secondary transition-colors hover:text-primary" href="/chat.html">查询</a>
+    </nav>
+
+    <div class="flex items-center gap-4">
+        <div class="hidden text-right md:block">
+            <div class="text-sm font-medium text-primary">内容入库</div>
+            <div class="text-xs text-secondary">当前后端支持 PDF / MD</div>
+        </div>
+        <div class="flex h-10 w-10 items-center justify-center rounded-full bg-primary-fixed text-primary shadow-sm">
+            <span class="material-symbols-outlined">luggage</span>
+        </div>
     </div>
-</div>
+</header>
+
+<main class="mx-auto max-w-screen-xl px-4 py-12 md:px-8">
+    <section class="mb-12 max-w-3xl">
+        <p class="mb-3 font-label text-xs font-semibold uppercase tracking-[0.28em] text-secondary">EasyTour Ingestion</p>
+        <h1 class="font-headline text-3xl font-bold tracking-tight text-primary md:text-4xl">把旅游资料导进知识库，后面的查询页才会真有料</h1>
+        <p class="mt-4 text-base leading-7 text-on-surface-variant">
+            这里保留了原来页面的上传、进度轮询和重复导入判断，只是把视觉从“科技实验室”换成了更适合旅行规划产品的版本。
+        </p>
+    </section>
+
+    <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
+        <section class="space-y-8 lg:col-span-2">
+            <!-- [修改] 上传区域换成新视觉，但仍然绑定原来的文件选择和拖拽上传 -->
+            <div id="dropZone" class="upload-glow ambient-shadow group relative overflow-hidden rounded-[28px] border border-outline-variant/20 bg-surface-container-lowest p-8 text-center transition-all duration-300 hover:bg-surface-container-low sm:p-10">
+                <div class="absolute -right-12 -top-10 h-40 w-40 rounded-full bg-primary-fixed blur-3xl opacity-70"></div>
+                <div class="absolute -bottom-16 left-0 h-32 w-32 rounded-full bg-primary/10 blur-3xl"></div>
+                <input id="fileInput" class="hidden" type="file" accept=".pdf,.md" multiple>
+
+                <div class="relative z-10 mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-primary-fixed text-primary shadow-[0_16px_32px_rgba(0,35,111,0.08)] transition-transform duration-300 group-hover:scale-110">
+                    <span class="material-symbols-outlined text-4xl">cloud_upload</span>
+                </div>
+                <h2 class="relative z-10 mt-6 text-2xl font-semibold text-on-surface">拖拽文件到这里，或者直接点一下上传</h2>
+                <p class="relative z-10 mx-auto mt-3 max-w-xl text-sm leading-6 text-secondary">
+                    当前这套后端实际支持 <strong>PDF</strong> 和 <strong>MD</strong>。多文件会自动排队导入，右侧能看到最近 5 条任务状态。
+                </p>
+                <div class="relative z-10 mt-6 flex flex-wrap items-center justify-center gap-3">
+                    <button id="pickFileBtn" class="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-primary-container px-6 py-3 text-sm font-medium text-white shadow-[0_10px_24px_rgba(0,35,111,0.18)] transition-all hover:shadow-[0_14px_32px_rgba(0,35,111,0.22)]" type="button">
+                        <span class="material-symbols-outlined text-base">attach_file</span>
+                        选择文件
+                    </button>
+                    <span id="selectedHint" class="rounded-full bg-surface-container-low px-4 py-2 text-xs font-label text-secondary">支持多选 · 刷新后保留本地任务记录</span>
+                </div>
+            </div>
+
+            <!-- [修改] 表单字段重新整理成旅游项目语义，并保留原 override 能力 -->
+            <div class="ambient-shadow rounded-[28px] bg-surface-container-lowest p-8">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                        <h2 class="flex items-center gap-2 text-xl font-semibold text-primary">
+                            <span class="material-symbols-outlined">label</span>
+                            预设元数据
+                        </h2>
+                        <p class="mt-2 text-sm leading-6 text-on-surface-variant">这些字段会随着本次上传一起传给后端，方便后续按景区、地区和来源检索。</p>
+                    </div>
+                    <div class="rounded-full bg-primary-fixed px-4 py-2 text-xs font-label text-primary">表单可选，不填也能上传</div>
+                </div>
+
+                <div class="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
+                    <label class="space-y-2">
+                        <span class="block text-xs font-label font-medium uppercase tracking-[0.22em] text-secondary">Scenic Spot / 景区名称</span>
+                        <input id="ov_document_title" class="w-full rounded-2xl border-0 bg-surface-container-low px-4 py-3 text-sm text-on-surface transition-colors focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary" placeholder="例如：黄山风景区导览手册">
+                    </label>
+
+                    <label class="space-y-2">
+                        <span class="block text-xs font-label font-medium uppercase tracking-[0.22em] text-secondary">Region / 地理位置</span>
+                        <input id="ov_region" class="w-full rounded-2xl border-0 bg-surface-container-low px-4 py-3 text-sm text-on-surface transition-colors focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary" placeholder="例如：安徽/黄山">
+                    </label>
+
+                    <label class="space-y-2 md:col-span-2">
+                        <span class="block text-xs font-label font-medium uppercase tracking-[0.22em] text-secondary">Source Label / 数据来源</span>
+                        <input id="ov_source_label_display" class="w-full rounded-2xl border-0 bg-surface-container-low px-4 py-3 text-sm text-on-surface transition-colors focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary" placeholder="例如：黄山市文旅局官方指南 2024">
+                    </label>
+
+                    <label class="space-y-2">
+                        <span class="block text-xs font-label font-medium uppercase tracking-[0.22em] text-secondary">Content Type / 内容类型</span>
+                        <select id="ov_content_type" class="w-full rounded-2xl border-0 bg-surface-container-low px-4 py-3 text-sm text-on-surface transition-colors focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary">
+                            <option value="">自动识别</option>
+                        </select>
+                    </label>
+                </div>
+
+                <details class="mt-8 rounded-[24px] border border-outline-variant/20 bg-surface-container-low px-5 py-4">
+                    <summary class="cursor-pointer list-none text-sm font-medium text-primary">
+                        <div class="flex items-center justify-between gap-4">
+                            <span class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-base">tune</span>
+                                高级导入设置
+                            </span>
+                            <span class="text-xs font-label text-secondary">元数据补录 / 强制重建索引</span>
+                        </div>
+                    </summary>
+
+                    <div class="mt-5 grid grid-cols-1 gap-6 md:grid-cols-2">
+                        <label class="space-y-2 md:col-span-2">
+                            <span class="block text-xs font-label font-medium uppercase tracking-[0.22em] text-secondary">Source Path / 来源路径或 URL</span>
+                            <input id="ov_source_path" class="w-full rounded-2xl border-0 bg-surface-container-lowest px-4 py-3 text-sm text-on-surface transition-colors focus:ring-2 focus:ring-primary" placeholder="可选，用于覆盖默认文件路径">
+                        </label>
+
+                        <label class="space-y-2">
+                            <span class="block text-xs font-label font-medium uppercase tracking-[0.22em] text-secondary">Force Mode / 导入策略</span>
+                            <select id="ov_force" class="w-full rounded-2xl border-0 bg-surface-container-lowest px-4 py-3 text-sm text-on-surface transition-colors focus:ring-2 focus:ring-primary">
+                                <option value="">默认导入</option>
+                                <option value="metadata_only">仅更新元数据</option>
+                                <option value="reindex">重新入库并重建索引</option>
+                            </select>
+                        </label>
+
+                        <div class="rounded-[24px] border border-dashed border-outline-variant/30 bg-surface-container-lowest px-4 py-4 text-sm leading-6 text-secondary">
+                            <p class="font-medium text-primary">小提醒</p>
+                            <p class="mt-2">如果同一文件已经入库，默认会提示“已存在”。只有你明确选择重新入库，才会走重建索引。</p>
+                        </div>
+                    </div>
+                </details>
+            </div>
+        </section>
+
+        <aside class="lg:col-span-1">
+            <!-- [修改] 右侧任务列表改成更清晰的导入线程，同时接回原来的轮询和日志 -->
+            <div class="ambient-shadow glass-panel rounded-[28px] border border-white/30 p-6">
+                <div class="flex items-center justify-between gap-3">
+                    <div>
+                        <h2 class="text-lg font-semibold text-primary">导入任务</h2>
+                        <p class="mt-1 text-sm text-secondary">最近 5 项，本地缓存可跨刷新保留</p>
+                    </div>
+                    <span class="rounded-full bg-surface-container-low px-3 py-1 text-xs font-label text-secondary">实时状态</span>
+                </div>
+
+                <div class="relative mt-6">
+                    <div class="absolute bottom-2 left-[15px] top-2 w-px bg-primary-fixed"></div>
+                    <div id="taskFeed" class="space-y-4"></div>
+                </div>
+
+                <button id="clearTasksBtn" class="mt-8 w-full rounded-2xl bg-transparent py-2.5 text-sm font-medium text-primary transition-colors hover:bg-surface-container-low" type="button">
+                    清空本地任务记录
+                </button>
+            </div>
+        </aside>
+    </div>
+</main>
+
+<nav class="fixed bottom-0 left-0 z-50 flex w-full items-center justify-around rounded-t-2xl bg-white/90 px-4 py-2 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] backdrop-blur-xl md:hidden">
+    <a class="flex scale-95 flex-col items-center justify-center rounded-xl bg-blue-50 px-6 py-1 text-blue-900 transition-transform duration-150 active:scale-90" href="/import">
+        <span class="material-symbols-outlined mb-1" style="font-variation-settings:'FILL' 1;">cloud_upload</span>
+        <span class="text-[10px] font-bold tracking-[0.2em]">导入</span>
+    </a>
+    <a class="flex scale-95 flex-col items-center justify-center px-6 py-1 text-slate-400 transition-transform duration-150 active:scale-90" href="/chat.html">
+        <span class="material-symbols-outlined mb-1">search</span>
+        <span class="text-[10px] font-bold tracking-[0.2em]">查询</span>
+    </a>
+</nav>
 
 <script>
-    const dropZone = document.getElementById('dropZone');
-    const fileInput = document.getElementById('fileInput');
-    const fileList = document.getElementById('fileList');
+    const API_BASE = window.location.protocol.startsWith("http")
+        ? `${window.location.protocol}//${window.location.host}`
+        : "http://127.0.0.1:8000";
 
-    // 模拟后端API地址
-        const API_BASE = `${location.protocol}//${location.host}`.includes('http') ? `${location.protocol}//${location.host}` : 'http://127.0.0.1:8000';
+    const STORAGE_KEY = "easytour_import_tasks_v2";
+    const MAX_TASKS = 5;
 
-    dropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropZone.style.borderColor = '#38bdf8';
-        dropZone.style.background = 'rgba(56, 189, 248, 0.1)';
-    });
+    const CONTENT_TYPE_LABELS = {
+        attraction: "景点",
+        route: "路线",
+        hotel: "酒店",
+        food: "美食",
+        transport: "交通",
+        culture: "文化"
+    };
 
-    dropZone.addEventListener('dragleave', (e) => {
-        e.preventDefault();
-        dropZone.style.borderColor = '';
-        dropZone.style.background = '';
-    });
+    const STATUS_META = {
+        uploading: {
+            label: "上传中",
+            icon: "arrow_upward",
+            tone: "warning",
+            summary: "文件正在发送到服务端"
+        },
+        pending: {
+            label: "排队中",
+            icon: "schedule",
+            tone: "pending",
+            summary: "任务已经进入队列，马上开始处理"
+        },
+        processing: {
+            label: "处理中",
+            icon: "sync",
+            tone: "processing",
+            summary: "系统正在抽取结构化信息"
+        },
+        completed: {
+            label: "已完成",
+            icon: "check",
+            tone: "success",
+            summary: "导入成功，知识已经入库"
+        },
+        already_imported: {
+            label: "已存在",
+            icon: "inventory_2",
+            tone: "success",
+            summary: "这个文件之前已经导入过了，直接复用现有文档"
+        },
+        requires_reindex: {
+            label: "需重建",
+            icon: "warning",
+            tone: "warning",
+            summary: "内容类型变化，需要选择“重新入库”"
+        },
+        failed: {
+            label: "失败",
+            icon: "close",
+            tone: "error",
+            summary: "导入过程中出了点问题"
+        }
+    };
 
-    dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropZone.style.borderColor = '';
-        dropZone.style.background = '';
-        handleFiles(e.dataTransfer.files);
-    });
+    const dropZone = document.getElementById("dropZone");
+    const fileInput = document.getElementById("fileInput");
+    const pickFileBtn = document.getElementById("pickFileBtn");
+    const selectedHint = document.getElementById("selectedHint");
+    const taskFeed = document.getElementById("taskFeed");
+    const clearTasksBtn = document.getElementById("clearTasksBtn");
+    const contentTypeSelect = document.getElementById("ov_content_type");
 
-    fileInput.addEventListener('change', (e) => {
-        handleFiles(e.target.files);
-    });
+    const activePolls = new Map();
+    const state = {
+        tasks: loadStoredTasks()
+    };
 
-    function handleFiles(files) {
-        Array.from(files).forEach(uploadFile);
+    function escapeHtml(value) {
+        return String(value || "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
     }
 
-    function updateProgressUI(wrapper, percentage) {
-        const bar = wrapper.querySelector('.progress-bar');
-        const text = wrapper.querySelector('.progress-text');
+    function humanFileSize(bytes) {
+        const num = Number(bytes || 0);
+        if (num < 1024) return `${num} B`;
+        if (num < 1024 * 1024) return `${(num / 1024).toFixed(1)} KB`;
+        return `${(num / 1024 / 1024).toFixed(1)} MB`;
+    }
 
-        const safePercentage = Math.min(Math.max(percentage, 0), 100);
+    function formatRelativeTime(timestamp) {
+        const ts = Number(timestamp || 0);
+        if (!ts) return "刚刚";
+        const diff = Date.now() - ts;
+        if (diff < 60 * 1000) return "刚刚";
+        if (diff < 60 * 60 * 1000) return `${Math.floor(diff / 60000)} 分钟前`;
+        if (diff < 24 * 60 * 60 * 1000) return `${Math.floor(diff / 3600000)} 小时前`;
+        return `${Math.floor(diff / 86400000)} 天前`;
+    }
 
-        bar.style.width = safePercentage + '%';
-        text.textContent = Math.round(safePercentage) + '%';
-
-        if (safePercentage >= 100) {
-            bar.style.background = 'linear-gradient(90deg, #10b981, #34d399)';
-        } else if (safePercentage < 10) {
-            bar.style.background = 'linear-gradient(90deg, #f59e0b, #fbbf24)';
-        } else {
-            bar.style.background = 'linear-gradient(90deg, #3b82f6, #60a5fa)';
+    function loadStoredTasks() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            const tasks = JSON.parse(raw || "[]");
+            return Array.isArray(tasks) ? tasks : [];
+        } catch (_) {
+            return [];
         }
+    }
+
+    function persistTasks() {
+        state.tasks = state.tasks
+            .sort((a, b) => Number(b.updatedAt || b.createdAt || 0) - Number(a.updatedAt || a.createdAt || 0))
+            .slice(0, MAX_TASKS);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state.tasks));
+    }
+
+    function getTask(localId) {
+        return state.tasks.find((task) => task.localId === localId) || null;
+    }
+
+    function upsertTask(patch) {
+        const current = getTask(patch.localId);
+        if (current) {
+            Object.assign(current, patch, { updatedAt: Date.now() });
+        } else {
+            state.tasks.unshift({ ...patch, updatedAt: Date.now() });
+        }
+        persistTasks();
+        renderTasks();
+    }
+
+    function appendTaskLogs(localId, lines) {
+        const task = getTask(localId);
+        if (!task) return;
+        const merged = [...(Array.isArray(task.logs) ? task.logs : []), ...(Array.isArray(lines) ? lines : [])];
+        task.logs = merged.slice(-12);
+        task.updatedAt = Date.now();
+        persistTasks();
+        renderTasks();
+    }
+
+    function createTask(file) {
+        return {
+            localId: `task-${Math.random().toString(36).slice(2)}`,
+            name: file.name,
+            sizeLabel: humanFileSize(file.size),
+            createdAt: Date.now(),
+            status: "uploading",
+            progress: 8,
+            summary: STATUS_META.uploading.summary,
+            logs: ["文件已选中，准备上传"],
+            totalSteps: getEstimatedSteps(file.name),
+            forceMode: document.getElementById("ov_force").value || "",
+            documentId: "",
+            taskId: ""
+        };
+    }
+
+    function getEstimatedSteps(fileName) {
+        const lowerName = String(fileName || "").toLowerCase();
+        return lowerName.endsWith(".pdf") ? 8 : 7;
+    }
+
+    function getToneClasses(tone) {
+        if (tone === "success") {
+            return {
+                iconWrap: "bg-success-surface text-success-text",
+                badge: "bg-success-surface text-success-text"
+            };
+        }
+        if (tone === "warning") {
+            return {
+                iconWrap: "bg-warning-surface text-warning-text",
+                badge: "bg-warning-surface text-warning-text"
+            };
+        }
+        if (tone === "error") {
+            return {
+                iconWrap: "bg-error-container text-on-error-container",
+                badge: "bg-error-container text-on-error-container"
+            };
+        }
+        if (tone === "processing") {
+            return {
+                iconWrap: "bg-primary-fixed text-primary",
+                badge: "bg-primary-fixed text-primary"
+            };
+        }
+        return {
+            iconWrap: "bg-surface-container-high text-secondary",
+            badge: "bg-surface-container-high text-secondary"
+        };
+    }
+
+    function buildTaskDetails(task) {
+        const details = [];
+        if (task.itemName) details.push(`主条目：${task.itemName}`);
+        if (task.regionPath) details.push(`地区：${task.regionPath}`);
+        if (task.chunkCount) details.push(`切片：${task.chunkCount}`);
+        if (task.contentType) details.push(`类型：${CONTENT_TYPE_LABELS[task.contentType] || task.contentType}`);
+        return details;
+    }
+
+    function renderTasks() {
+        if (!state.tasks.length) {
+            taskFeed.innerHTML = `
+                <div class="task-enter relative z-10 rounded-[24px] border border-dashed border-outline-variant/30 bg-surface-container-low p-5 text-sm text-secondary">
+                    <div class="flex items-start gap-4">
+                        <div class="mt-0.5 flex h-9 w-9 items-center justify-center rounded-2xl bg-primary-fixed text-primary">
+                            <span class="material-symbols-outlined">upload_file</span>
+                        </div>
+                        <div>
+                            <div class="font-medium text-primary">还没有导入任务</div>
+                            <p class="mt-1 leading-6">把 PDF 或 MD 拖进左侧区域，右边就会开始实时滚动状态。</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        taskFeed.innerHTML = state.tasks.map((task) => {
+            const meta = STATUS_META[task.status] || STATUS_META.processing;
+            const tones = getToneClasses(meta.tone);
+            const details = buildTaskDetails(task);
+            const logs = Array.isArray(task.logs) ? task.logs : [];
+            const showProgress = task.status === "uploading" || task.status === "pending" || task.status === "processing";
+
+            return `
+                <div class="task-enter relative z-10 flex gap-4 rounded-[24px] border border-outline-variant/18 bg-surface-container-low p-4">
+                    <div class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${tones.iconWrap}">
+                        <span class="material-symbols-outlined text-[15px] ${task.status === "processing" ? "animate-spin" : ""}">${meta.icon}</span>
+                    </div>
+
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <h3 class="truncate text-sm font-medium text-on-surface">${escapeHtml(task.name)}</h3>
+                                <p class="mt-1 text-xs leading-5 text-secondary">${escapeHtml(task.summary || meta.summary)}</p>
+                            </div>
+                            <span class="shrink-0 rounded-full px-2.5 py-1 text-[10px] font-label font-semibold ${tones.badge}">${meta.label}</span>
+                        </div>
+
+                        <div class="mt-2 flex flex-wrap items-center gap-2 text-[10px] font-label text-outline">
+                            <span>${escapeHtml(task.sizeLabel || "")}</span>
+                            <span>•</span>
+                            <span>${formatRelativeTime(task.updatedAt || task.createdAt)}</span>
+                            ${task.documentId ? `<span>•</span><span>ID ${escapeHtml(task.documentId.slice(0, 8))}</span>` : ""}
+                        </div>
+
+                        ${showProgress ? `
+                            <div class="mt-3">
+                                <div class="h-1.5 overflow-hidden rounded-full bg-surface-container-high">
+                                    <div class="h-1.5 rounded-full bg-gradient-to-r from-primary to-primary-container transition-all duration-500" style="width:${Math.max(0, Math.min(100, Number(task.progress || 0)))}%"></div>
+                                </div>
+                                <div class="mt-1 text-right text-[10px] font-label text-secondary">${Math.round(Number(task.progress || 0))}%</div>
+                            </div>
+                        ` : ""}
+
+                        ${details.length ? `
+                            <div class="mt-3 flex flex-wrap gap-2">
+                                ${details.map((detail) => `<span class="rounded-full bg-surface-container-lowest px-3 py-1 text-[11px] text-secondary">${escapeHtml(detail)}</span>`).join("")}
+                            </div>
+                        ` : ""}
+
+                        ${logs.length ? `
+                            <details class="mt-3 rounded-2xl bg-surface-container-lowest px-4 py-3">
+                                <summary class="cursor-pointer text-xs font-medium text-primary">查看处理日志</summary>
+                                <ul class="task-log mt-3 max-h-28 space-y-2 overflow-y-auto pr-2 text-xs leading-5 text-secondary">
+                                    ${logs.map((line) => `<li>• ${escapeHtml(line)}</li>`).join("")}
+                                </ul>
+                            </details>
+                        ` : ""}
+                    </div>
+                </div>
+            `;
+        }).join("");
+    }
+
+    function collectOverrides() {
+        const payload = {};
+        const documentTitle = document.getElementById("ov_document_title").value.trim();
+        const region = document.getElementById("ov_region").value.trim();
+        const sourceLabel = document.getElementById("ov_source_label_display").value.trim();
+        const contentType = document.getElementById("ov_content_type").value;
+        const sourcePath = document.getElementById("ov_source_path").value.trim();
+        const force = document.getElementById("ov_force").value;
+
+        if (documentTitle) payload.document_title = documentTitle;
+        if (region) payload.region = region;
+        if (sourceLabel) payload.source_label_display = sourceLabel;
+        if (contentType) payload.content_type = contentType;
+        if (sourcePath) payload.source_path = sourcePath;
+        if (force) payload.force = force;
+        return payload;
+    }
+
+    function calculateProgress(doneList, runningList, estimatedSteps, status) {
+        if (status === "completed") return 100;
+        const done = Array.isArray(doneList) ? doneList.length : 0;
+        const running = Array.isArray(runningList) ? runningList.length : 0;
+        const steps = Math.max(Number(estimatedSteps || 1), done + running + 1);
+        let progress = (done / steps) * 100;
+        if (running > 0) {
+            progress += (0.5 / steps) * 100;
+        }
+        return Math.min(Math.max(progress, 12), 94);
+    }
+
+    function buildStatusSummary(data) {
+        if (data.status === "completed") {
+            const headline = data.item_name || data.file_title || "导入完成";
+            const chunks = data.chunk_count ? ` · ${data.chunk_count} 个切片` : "";
+            return `${headline}${chunks}`;
+        }
+        if (data.status === "failed") {
+            return data.error || "导入失败";
+        }
+        const running = Array.isArray(data.running_list) && data.running_list.length ? data.running_list[0] : "";
+        const done = Array.isArray(data.done_list) ? data.done_list.length : 0;
+        if (running) {
+            return `正在处理：${running}`;
+        }
+        if (done > 0) {
+            return `已完成 ${done} 个步骤，继续处理中`;
+        }
+        return STATUS_META[data.status]?.summary || "任务处理中";
+    }
+
+    function buildLogsFromStatus(data) {
+        const doneLogs = (Array.isArray(data.done_list) ? data.done_list : []).map((item) => `已完成 · ${item}`);
+        const runningLogs = (Array.isArray(data.running_list) ? data.running_list : []).map((item) => `进行中 · ${item}`);
+        const logs = [...doneLogs, ...runningLogs];
+        if (data.error) logs.push(`错误 · ${data.error}`);
+        return logs.slice(-12);
+    }
+
+    async function fetchDocumentInfo(documentId) {
+        if (!documentId) return null;
+        const response = await fetch(`${API_BASE}/documents/${encodeURIComponent(documentId)}`);
+        if (!response.ok) return null;
+        return response.json();
+    }
+
+    async function syncExistingDocument(localId, documentId) {
+        try {
+            const doc = await fetchDocumentInfo(documentId);
+            if (!doc) return;
+            const entity = Array.isArray(doc.main_entities) ? doc.main_entities[0] || {} : {};
+            upsertTask({
+                localId,
+                documentId,
+                itemName: entity.item_name || doc.document_title || "",
+                regionPath: doc.region_path || "",
+                chunkCount: doc.chunk_count || 0,
+                contentType: doc.content_type || "",
+                summary: `已复用现有文档${doc.region_path ? ` · ${doc.region_path}` : ""}`,
+                logs: ["文件已存在，未重复入库", `文档 ID：${documentId}`]
+            });
+        } catch (_) {
+            // 静默失败，避免影响主流程
+        }
+    }
+
+    function stopPolling(localId) {
+        const timer = activePolls.get(localId);
+        if (timer) {
+            clearInterval(timer);
+            activePolls.delete(localId);
+        }
+    }
+
+    function startPolling(localId, taskId, estimatedSteps) {
+        if (!taskId || activePolls.has(localId)) return;
+
+        const timer = setInterval(async () => {
+            try {
+                const response = await fetch(`${API_BASE}/status/${encodeURIComponent(taskId)}`);
+                if (!response.ok) throw new Error(`status ${response.status}`);
+                const data = await response.json();
+
+                upsertTask({
+                    localId,
+                    taskId,
+                    documentId: data.document_id || getTask(localId)?.documentId || "",
+                    status: data.status === "failed" ? "failed" : (data.status || "processing"),
+                    progress: calculateProgress(data.done_list, data.running_list, estimatedSteps, data.status),
+                    summary: buildStatusSummary(data),
+                    logs: buildLogsFromStatus(data),
+                    itemName: data.item_name || "",
+                    regionPath: data.region_path || "",
+                    chunkCount: data.chunk_count || 0
+                });
+
+                if (data.status === "completed" || data.status === "failed") {
+                    stopPolling(localId);
+                }
+            } catch (error) {
+                appendTaskLogs(localId, [`状态轮询失败：${error.message || error}`]);
+            }
+        }, 1500);
+
+        activePolls.set(localId, timer);
     }
 
     async function uploadFile(file) {
-        // === 核心逻辑优化：动态判断总节点数 ===
-        const isPDF = file.name.toLowerCase().endsWith('.pdf');
-        // PDF 需要 9 步（含上传），MD 跳过 pdf_to_md 需要 8 步
-        const totalNodes = isPDF ? 8 : 7;
-
-        const id = 'file-' + Math.random().toString(36).substr(2, 8);
-        const html = `
-            <div class="file-item" id="${id}">
-                <div class="file-info">
-                    <div class="file-header">
-                        <span class="file-name">${file.name}</span>
-                        <span class="file-size">${(file.size / 1024).toFixed(2)} KB</span>
-                    </div>
-                    <div class="progress-wrapper">
-                        <div class="progress-bar-container">
-                            <div class="progress-bar"></div>
-                        </div>
-                        <div class="progress-text">0%</div>
-                    </div>
-                    <details class="log-details" open>
-                        <summary>准备上传...</summary>
-                        <ul class="log-list"></ul>
-                    </details>
-                </div>
-                <div class="status-badge status-uploading">上传中...</div>
-            </div>
-        `;
-        fileList.insertAdjacentHTML('afterbegin', html);
-
-        const itemEl = document.getElementById(id);
-        const statusBadge = itemEl.querySelector('.status-badge');
-        const progressWrapper = itemEl.querySelector('.progress-wrapper');
-        const logListEl = itemEl.querySelector('.log-list');
+        const task = createTask(file);
+        upsertTask(task);
 
         const formData = new FormData();
-        formData.append('file', file);
-        const ovContentType = document.getElementById('ov_content_type').value;
-        const ovRegion = document.getElementById('ov_region').value.trim();
-        const ovDocumentTitle = document.getElementById('ov_document_title').value.trim();
-        const ovForce = document.getElementById('ov_force').value;
-        if (ovContentType) formData.append('content_type', ovContentType);
-        if (ovRegion) formData.append('region', ovRegion);
-        if (ovDocumentTitle) formData.append('document_title', ovDocumentTitle);
-        if (ovForce) formData.append('force', ovForce);
+        formData.append("file", file);
+        const overrides = collectOverrides();
+        Object.entries(overrides).forEach(([key, value]) => formData.append(key, value));
 
         try {
-            progressWrapper.style.display = 'block';
-
-            const uploadPercentage = (1 / totalNodes) * 100;
-            updateProgressUI(progressWrapper, Math.min(uploadPercentage, 10));
-
-            const initialLog = document.createElement('li');
-            initialLog.textContent = "开始上传文件...";
-            initialLog.className = "log-running";
-            logListEl.appendChild(initialLog);
-
             const response = await fetch(`${API_BASE}/upload`, {
-                method: 'POST',
+                method: "POST",
                 body: formData
             });
-
             const result = await response.json();
 
-            // 409 requires_reindex
             if (response.status === 409) {
-                statusBadge.textContent = '需重建索引';
-                statusBadge.className = 'status-badge status-error';
-                updateProgressUI(progressWrapper, 0);
-                const errLog = document.createElement('li');
-                errLog.textContent = `⚠️ content_type 已变更，请选择 force=reindex 后重新提交 (document_id: ${result.document_id || ''})`;
-                errLog.style.color = "#f59e0b";
-                logListEl.appendChild(errLog);
+                upsertTask({
+                    localId: task.localId,
+                    status: "requires_reindex",
+                    progress: 0,
+                    documentId: result.document_id || "",
+                    summary: "检测到内容类型变化，只有重新入库才能更新索引",
+                    logs: [
+                        "服务端拒绝本次元数据更新",
+                        "原因：content_type 发生变化",
+                        "如果你确认要覆盖，切换成“重新入库并重建索引”后再传一次"
+                    ]
+                });
                 return;
             }
 
-            if (!response.ok) throw new Error(`Upload failed: ${response.status}`);
+            if (!response.ok) {
+                throw new Error(result.detail || result.error || `上传失败 (${response.status})`);
+            }
 
-            // 判重 short-circuit
-            if (result.status === 'already_imported') {
-                statusBadge.textContent = '已存在';
-                statusBadge.className = 'status-badge status-completed';
-                updateProgressUI(progressWrapper, 100);
-                const docRes = await fetch(`${API_BASE}/documents/${result.document_id}`).then(r => r.ok ? r.json() : null);
-                const infoLog = document.createElement('li');
-                infoLog.textContent = `✅ 文档已导入，document_id: ${result.document_id}` +
-                    (docRes ? `，地区: ${docRes.region_path || '—'}，类型: ${docRes.content_type || '—'}` : '');
-                infoLog.className = 'log-done';
-                logListEl.appendChild(infoLog);
+            if (result.status === "already_imported") {
+                upsertTask({
+                    localId: task.localId,
+                    status: "already_imported",
+                    progress: 100,
+                    documentId: result.document_id || "",
+                    summary: "文件哈希一致，直接复用知识库中的现有文档",
+                    logs: ["文件已存在，无需再次导入"]
+                });
+                await syncExistingDocument(task.localId, result.document_id || "");
                 return;
             }
 
-            const taskId = result.task_id;
-            updateProgressUI(progressWrapper, uploadPercentage);
-            statusBadge.textContent = '处理中';
-            statusBadge.className = 'status-badge status-processing';
+            upsertTask({
+                localId: task.localId,
+                taskId: result.task_id || "",
+                documentId: result.document_id || "",
+                status: "processing",
+                progress: 12,
+                summary: "文件已上传，开始进入解析流程",
+                logs: ["文件上传完成", "任务已进入后台处理队列"]
+            });
 
-            pollStatus(taskId, itemEl, totalNodes);
-
+            startPolling(task.localId, result.task_id || "", task.totalSteps);
         } catch (error) {
-            console.error(error);
-            statusBadge.textContent = '上传失败';
-            statusBadge.className = 'status-badge status-error';
-            updateProgressUI(progressWrapper, 0);
-
-            const errLog = document.createElement('li');
-            errLog.textContent = "❌ 网络请求失败或服务器异常";
-            errLog.style.color = "#ef4444";
-            logListEl.appendChild(errLog);
+            upsertTask({
+                localId: task.localId,
+                status: "failed",
+                progress: 0,
+                summary: error.message || "上传失败",
+                logs: ["文件上传失败", error.message || "请检查服务状态"]
+            });
         }
     }
 
-    function normalizeLogText(text) {
-        if (typeof text !== 'string') return String(text);
-        return text;
+    function handleFiles(files) {
+        const list = Array.from(files || []);
+        if (!list.length) return;
+        selectedHint.textContent = `已选中 ${list.length} 个文件，开始排队导入`;
+        list.forEach(uploadFile);
     }
 
-    // 接收 totalNodes 参数计算最终百分比和渲染文案
-    function renderLogsAndCalculateProgress(itemEl, doneList, runningList, totalNodes) {
-        const logSummary = itemEl.querySelector('.log-details summary');
-        const logListEl = itemEl.querySelector('.log-list');
-
-        const done = Array.isArray(doneList) ? doneList : [];
-        const running = Array.isArray(runningList) ? runningList : [];
-
-        // === 🚨 修复核心：调整进度计算逻辑 ===
-        // 1. 直接使用 done.length，去掉多余的 +1
-        let currentPercentage = (done.length / totalNodes) * 100;
-
-        // 2. 平滑处理：如果有节点在运行，加半步的进度
-        if (running.length > 0) {
-            currentPercentage += (0.5 / totalNodes) * 100;
+    async function loadContentTypes() {
+        try {
+            const response = await fetch(`${API_BASE}/meta/content_types`);
+            if (!response.ok) return;
+            const items = await response.json();
+            const options = Array.isArray(items) ? items : [];
+            options.forEach((item) => {
+                const option = document.createElement("option");
+                option.value = item.value;
+                option.textContent = CONTENT_TYPE_LABELS[item.value] || item.label || item.value;
+                contentTypeSelect.appendChild(option);
+            });
+        } catch (_) {
+            Object.entries(CONTENT_TYPE_LABELS).forEach(([value, label]) => {
+                const option = document.createElement("option");
+                option.value = value;
+                option.textContent = label;
+                contentTypeSelect.appendChild(option);
+            });
         }
-
-        // 3. 进度条“锁死”机制：只要还没最终完成，最高只能显示 99%
-        if (currentPercentage >= 100) {
-            currentPercentage = 95;
-        }
-        // =====================================
-
-        // 更新日志文案
-        logSummary.textContent = `📋 运行日志 (已完成: ${done.length}, 进行中: ${running.length}, 共 ${totalNodes} 步)`;
-
-        logListEl.innerHTML = '';
-
-        const uploadLog = document.createElement('li');
-        // uploadLog.textContent = "文件上传已完成";
-        uploadLog.className = "log-done";
-        logListEl.appendChild(uploadLog);
-
-        for (const item of done) {
-            // 过滤掉后端可能返回的 upload_file，防止和上面写死的那行日志重复
-            if (item === 'upload_file') continue;
-
-            const li = document.createElement('li');
-            li.textContent = `${normalizeLogText(item)} 节点执行完成`;
-            li.className = 'log-done';
-            logListEl.appendChild(li);
-        }
-
-        for (const item of running) {
-            const li = document.createElement('li');
-            li.textContent = `正在处理 ${normalizeLogText(item)} 节点...`;
-            li.className = 'log-running';
-            logListEl.appendChild(li);
-        }
-
-        logListEl.scrollTop = logListEl.scrollHeight;
-
-        return currentPercentage;
     }
 
-    function pollStatus(taskId, itemEl, totalNodes) {
-        const statusBadge = itemEl.querySelector('.status-badge');
-        const progressWrapper = itemEl.querySelector('.progress-wrapper');
-        const logDetails = itemEl.querySelector('.log-details');
-
-        const interval = setInterval(async () => {
-            try {
-                const res = await fetch(`${API_BASE}/status/${taskId}`);
-                if (!res.ok) throw new Error('Status request failed');
-
-                const data = await res.json();
-
-                // 传入 totalNodes 继续计算
-                const calculatedPercentage = renderLogsAndCalculateProgress(itemEl, data.done_list, data.running_list, totalNodes);
-
-                if (data.status === 'completed') {
-                    statusBadge.textContent = '已完成';
-                    statusBadge.className = 'status-badge status-completed';
-                    updateProgressUI(progressWrapper, 100);
-
-                    setTimeout(() => {
-                        logDetails.open = false;
-                    }, 1000);
-                    clearInterval(interval);
-                } else if (data.status === 'processing') {
-                    updateProgressUI(progressWrapper, calculatedPercentage);
-                } else if (data.status === 'failed') {
-                    statusBadge.textContent = '失败';
-                    statusBadge.className = 'status-badge status-error';
-
-                    const logListEl = itemEl.querySelector('.log-list');
-                    const errLog = document.createElement('li');
-                    errLog.textContent = "❌ 工作流执行失败中止";
-                    errLog.style.color = "#ef4444";
-                    logListEl.appendChild(errLog);
-
-                    clearInterval(interval);
-                }
-            } catch (e) {
-                console.error('Polling error', e);
+    function resumeActiveTasks() {
+        state.tasks.forEach((task) => {
+            if ((task.status === "processing" || task.status === "pending" || task.status === "uploading") && task.taskId) {
+                startPolling(task.localId, task.taskId, task.totalSteps || 8);
             }
-        }, 1500);
+        });
     }
-</script>
 
+    pickFileBtn.addEventListener("click", () => fileInput.click());
+    dropZone.addEventListener("click", (event) => {
+        if (pickFileBtn.contains(event.target)) return;
+        fileInput.click();
+    });
+
+    fileInput.addEventListener("change", (event) => {
+        handleFiles(event.target.files);
+        fileInput.value = "";
+    });
+
+    dropZone.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        dropZone.classList.add("is-dragover");
+    });
+
+    dropZone.addEventListener("dragleave", () => {
+        dropZone.classList.remove("is-dragover");
+    });
+
+    dropZone.addEventListener("drop", (event) => {
+        event.preventDefault();
+        dropZone.classList.remove("is-dragover");
+        handleFiles(event.dataTransfer.files);
+    });
+
+    clearTasksBtn.addEventListener("click", () => {
+        if (!state.tasks.length) return;
+        if (!window.confirm("要清空右侧这些本地任务记录吗？这不会删除后端知识库，只是把页面记忆清掉。")) return;
+        activePolls.forEach((timer) => clearInterval(timer));
+        activePolls.clear();
+        state.tasks = [];
+        localStorage.removeItem(STORAGE_KEY);
+        renderTasks();
+        selectedHint.textContent = "支持多选 · 刷新后保留本地任务记录";
+    });
+
+    renderTasks();
+    loadContentTypes();
+    resumeActiveTasks();
+</script>
 </body>
 </html>

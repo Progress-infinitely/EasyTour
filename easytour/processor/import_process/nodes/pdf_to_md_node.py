@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 import shutil
@@ -10,7 +10,7 @@ from urllib import error, request
 
 import requests
 
-from easytour.processor.import_process.base import BaseNode, setup_logging, T
+from easytour.processor.import_process.base import BaseNode
 from easytour.processor.import_process.exceptions import (
     FileProcessingError,
     PdfConversionError,
@@ -20,20 +20,11 @@ from easytour.processor.import_process.state import ImportGraphState
 
 
 class PdfToMdNode(BaseNode):
-    """PDF 杞?Markdown 鑺傜偣銆?
-    杩欐槸瀵煎叆閾鹃噷瀵瑰垵瀛﹁€呮渶鍏抽敭鐨勮妭鐐逛箣涓€銆?    浣犲彲浠ュ厛璁颁綇涓€鍙ヨ瘽锛?
-    > 鍚庨潰鐨勫鍏ユ祦绋嬩富瑕侀兘鍥寸粫 Markdown 鏂囨湰鏉ュ鐞嗭紝鎵€浠?PDF 蹇呴』鍏堝彉鎴?Markdown銆?
-    杩欎釜鑺傜偣鏈韩涓嶈礋璐ｂ€滄湰鍦拌В鏋?PDF 鍐呭鈥濓紝
-    鑰屾槸鎶婇珮绠楀姏閮ㄥ垎浜ょ粰杩滅▼ MinerU API銆?
-    鏈湴杩欓噷涓昏鍋?4 浠朵簨锛?    1. 鏍￠獙杈撳叆璺緞
-    2. 鍙戣捣杩滅▼瑙ｆ瀽浠诲姟
-    3. 杞杩滅▼浠诲姟鐘舵€?    4. 涓嬭浇骞舵暣鐞嗚В鏋愮粨鏋滃埌鏈湴鐩綍
-
-    浣犲彲浠ユ妸瀹冪悊瑙ｆ垚锛?    鈥滄湰鍦板鍏ラ摼瀵硅繙绋?PDF 瑙ｆ瀽鏈嶅姟鐨勪竴灞傝皟搴﹀寘瑁呪€濄€?    """
+    """调用 MinerU 把 PDF 转成 Markdown。"""
 
     name = 'pdf_to_md_node'
 
-    # 杩欎簺闆嗗悎鏄负浜嗗吋瀹硅繙绋嬫湇鍔″彲鑳借繑鍥炵殑涓嶅悓鐘舵€佸瓧绗︿覆銆?    # 杩欐牱鐘舵€佸垽鏂氨涓嶄細鍜屾煇涓€涓浐瀹氬瓧娈靛悕銆佸浐瀹氭枃妗堢粦姝汇€?    _REMOTE_PENDING_STATUSES = {
+    _REMOTE_PENDING_STATUSES = {
         '',
         'created',
         'queued',
@@ -53,53 +44,45 @@ class PdfToMdNode(BaseNode):
     _REMOTE_UPLOAD_RETRY_STATUS_CODES = {408, 429, 500, 502, 503, 504}
 
     def process(self, state: ImportGraphState) -> ImportGraphState:
-        """鑺傜偣鍏ュ彛锛氭牎楠岃緭鍏ャ€佽皟鐢ㄨ繙绋?MinerU銆佹妸 `md_path` 鍐欏洖 state銆?""
+        """校验输入，执行远程转换，并把 md_path 写回 state。"""
         import_file_path, file_dir_path = self._validate_state_inputs_path(state)
         self._execute_conversion(import_file_path, file_dir_path)
         md_path = self._get_md_paths(import_file_path, file_dir_path)
         if not Path(md_path).exists():
-            raise PdfConversionError(f'鏈壘鍒伴鏈熺殑 markdown 鏂囦欢: {md_path}', self.name)
+            raise PdfConversionError(f'未找到预期的 Markdown 文件: {md_path}', self.name)
         state['md_path'] = md_path
         return state
 
     def _validate_state_inputs_path(self, state: ImportGraphState) -> Tuple[Path, Path]:
-        """鏍￠獙杈撳叆璺緞锛屽苟纭繚宸ヤ綔鐩綍瀛樺湪銆?
-        杩欓噷鏈€閲嶈鐨勮緭鍑轰笉鏄€滄姤涓嶆姤閿欌€濓紝
-        鑰屾槸鎶婂悗缁祦绋嬬湡姝ｈ鐢ㄧ殑涓や釜 Path 瀵硅薄鍑嗗濂斤細
-        - 鍘熷 PDF 璺緞
-        - 褰撳墠浠诲姟鐨勫伐浣滅洰褰?        """
-        self.log_step('step1', '鏍￠獙杈撳叆璺緞')
+        """检查输入路径，并确保工作目录存在。"""
+        self.log_step('step1', '校验输入路径')
         import_file_path = state.get('import_file_path', '')
         file_dir = state.get('file_dir', '')
         if not import_file_path:
-            raise ValidationError('import_file_path 缂哄け', self.name)
+            raise ValidationError('import_file_path 缺失', self.name)
 
         import_file_path_obj = Path(import_file_path)
         if not import_file_path_obj.exists():
-            raise FileProcessingError(f'Input file not found: {import_file_path_obj}', self.name)
+            raise FileProcessingError(f'input file not found: {import_file_path_obj}', self.name)
+
         if not file_dir:
             file_dir = str(import_file_path_obj.parent)
         file_dir_path_obj = Path(file_dir)
         file_dir_path_obj.mkdir(parents=True, exist_ok=True)
+
         self.logger.info('input file path: %s', import_file_path_obj)
         self.logger.info('working directory: %s', file_dir_path_obj)
         return import_file_path_obj, file_dir_path_obj
 
     def _execute_conversion(self, import_file_path: Path, file_dir_path: Path) -> None:
-        """鎵ц PDF 杞?Markdown銆?
-        褰撳墠瀹炵幇鍙蛋杩滅▼ MinerU銆?        涔熷氨鏄锛?        鏈湴涓嶅仛澶嶆潅 PDF 瑙ｆ瀽锛屾湰鍦板彧璐熻矗鎶婁换鍔′氦缁欒繙绔苟鎶婄粨鏋滄嬁鍥炴潵銆?        """
+        """执行 PDF 转 Markdown。"""
         if not self.config.mineru_api_key:
-            raise PdfConversionError('MINERU_API_KEY 缂哄け', self.name)
-        self.log_step('step2', '浣跨敤 MinerU 瀹樻柟 API')
+            raise PdfConversionError('MINERU_API_KEY 缺失', self.name)
+        self.log_step('step2', '调用 MinerU 官方 API')
         self._execute_remote_mineru(import_file_path, file_dir_path)
 
     def _execute_remote_mineru(self, import_file_path: Path, file_dir_path: Path) -> None:
-        """瀹屾暣鎵ц涓€娆?MinerU 杩滅▼浠诲姟銆?
-        鏁翠釜杩滅▼娴佺▼鍙互鎷嗘垚 4 灏忔锛?        1. 鍏堝悜 MinerU 鐢宠涓€涓笂浼犲湴鍧€
-        2. 鍐嶆妸 PDF 鐪熸涓婁紶杩囧幓
-        3. 鐒跺悗杞浠诲姟鏄惁澶勭悊瀹屾垚
-        4. 鏈€鍚庝笅杞借В鏋愪骇鐗╁帇缂╁寘骞舵暣鐞嗗埌鏈湴
-        """
+        """完整执行一次远程 MinerU 任务。"""
         upload_payload = {
             'enable_formula': True,
             'files': [
@@ -155,7 +138,7 @@ class PdfToMdNode(BaseNode):
         payload: dict[str, Any] | None = None,
         headers: dict[str, str] | None = None,
     ) -> dict[str, Any]:
-        """鍙戦€佷竴娆?JSON HTTP 璇锋眰鍒?MinerU API銆?""
+        """向 MinerU API 发送 JSON 请求。"""
         final_headers = {
             'Authorization': f'Bearer {self.config.mineru_api_key}',
             'Content-Type': 'application/json',
@@ -192,7 +175,7 @@ class PdfToMdNode(BaseNode):
             ) from exc
 
     def _unwrap_api_data(self, payload: dict[str, Any], action: str) -> dict[str, Any]:
-        """浠?MinerU 鏍囧噯鍝嶅簲閲屽彇鍑?`data` 瀛楁銆?""
+        """从 MinerU 标准响应中取出 data 字段。"""
         if payload.get('code') != 0:
             raise PdfConversionError(
                 f'MinerU API failed to {action}: {payload}',
@@ -208,8 +191,7 @@ class PdfToMdNode(BaseNode):
         return data
 
     def _upload_file(self, upload_url: str, file_path: Path) -> None:
-        """鎶?PDF 鏂囦欢涓婁紶鍒?MinerU 鎻愪緵鐨勯绛惧悕鍦板潃銆?
-        杩欓噷棰濆鍋氫簡閲嶈瘯锛?        鍥犱负涓婁紶闃舵缁忓父浼氬彈鍒扮綉缁滄姈鍔ㄣ€佷复鏃?5xx銆侀檺娴佺瓑褰卞搷銆?        """
+        """上传 PDF 到预签名地址，必要时自动重试。"""
         max_attempts = 3
         last_error: Exception | None = None
 
@@ -275,13 +257,10 @@ class PdfToMdNode(BaseNode):
                 )
                 time.sleep(attempt)
 
-        raise PdfConversionError(
-            f'MinerU upload failed: {last_error}',
-            self.name,
-        ) from last_error
+        raise PdfConversionError(f'MinerU upload failed: {last_error}', self.name) from last_error
 
     def _poll_remote_result(self, *, batch_id: str, file_name: str) -> dict[str, Any]:
-        """杞 MinerU 浠诲姟鐘舵€侊紝鐩村埌鎴愬姛銆佸け璐ユ垨瓒呮椂銆?""
+        """轮询远程任务直到成功、失败或超时。"""
         poll_url = f"{self.config.mineru_api_base.rstrip('/')}/extract-results/batch/{batch_id}"
         deadline = time.time() + self.config.mineru_timeout_seconds
 
@@ -293,7 +272,7 @@ class PdfToMdNode(BaseNode):
             status = self._extract_status(result_item, data)
             self.logger.info('MinerU remote status=%s batch_id=%s', status or 'unknown', batch_id)
 
-            # 涓€鏃︽嬁鍒板帇缂╁寘鍦板潃锛岃鏄庣粨鏋滃凡缁忓熀鏈噯澶囧ソ浜嗐€?            if self._extract_full_zip_url(result_item):
+            if self._extract_full_zip_url(result_item):
                 return result_item
 
             if status in self._REMOTE_SUCCESS_STATUSES:
@@ -320,7 +299,7 @@ class PdfToMdNode(BaseNode):
         )
 
     def _select_result_item(self, data: dict[str, Any], file_name: str) -> dict[str, Any]:
-        """浠庤繑鍥炵粨鏋勯噷鎸戝嚭褰撳墠鏂囦欢瀵瑰簲鐨勭粨鏋滃璞°€?""
+        """从返回结构里取出当前文件对应的结果。"""
         extract_result = data.get('extract_result')
 
         if isinstance(extract_result, dict):
@@ -342,7 +321,7 @@ class PdfToMdNode(BaseNode):
 
     @staticmethod
     def _extract_status(result_item: dict[str, Any], data: dict[str, Any]) -> str:
-        """鍏煎涓嶅悓杩斿洖瀛楁鍚嶏紝鎻愬彇浠诲姟鐘舵€併€?""
+        """兼容不同字段名，提取任务状态。"""
         status = (
             result_item.get('state')
             or result_item.get('status')
@@ -355,12 +334,8 @@ class PdfToMdNode(BaseNode):
 
     @staticmethod
     def _extract_full_zip_url(result_item: dict[str, Any]) -> str:
-        """鎷垮埌瑙ｆ瀽缁撴灉鍘嬬缉鍖呬笅杞藉湴鍧€銆?""
-        return str(
-            result_item.get('full_zip_url')
-            or result_item.get('zip_url')
-            or ''
-        ).strip()
+        """提取结果压缩包下载地址。"""
+        return str(result_item.get('full_zip_url') or result_item.get('zip_url') or '').strip()
 
     def _download_and_prepare_output(
         self,
@@ -369,10 +344,7 @@ class PdfToMdNode(BaseNode):
         import_file_path: Path,
         file_dir_path: Path,
     ) -> None:
-        """涓嬭浇 MinerU 缁撴灉鍘嬬缉鍖咃紝骞舵暣鐞嗘垚椤圭洰闇€瑕佺殑鐩綍缁撴瀯銆?
-        杩欎竴姝ュ仛瀹屽悗锛屽綋鍓嶉」鐩細寰楀埌涓€涓粺涓€绾﹀畾鐨?Markdown 璺緞锛?        `浠诲姟鐩綍/鏂囦欢鍚?hybrid_auto/鏂囦欢鍚?md`
-
-        鍚庣画瀵煎叆鑺傜偣灏卞彧闇€瑕佽杩欎釜璺緞锛屼笉闇€瑕佸啀鍏冲績杩滅▼鏈嶅姟鍘熷鍘嬬缉鍖呴暱浠€涔堟牱銆?        """
+        """下载结果压缩包，并整理成项目约定的输出目录。"""
         file_name = import_file_path.stem
 
         document_root = file_dir_path / file_name
@@ -414,7 +386,7 @@ class PdfToMdNode(BaseNode):
         self.logger.info('MinerU remote output ready at %s', canonical_md_path)
 
     def _download_file(self, url: str, target_path: Path) -> None:
-        """涓嬭浇杩滅▼鍘嬬缉鍖呭埌鏈湴銆?""
+        """下载远程压缩包到本地。"""
         req = request.Request(url=url, method='GET')
         try:
             with request.urlopen(req, timeout=self.config.mineru_timeout_seconds) as resp:
@@ -432,7 +404,7 @@ class PdfToMdNode(BaseNode):
             ) from exc
 
     def _locate_result_root(self, extract_root: Path) -> Tuple[Path, Path]:
-        """鍦ㄨВ鍘嬬洰褰曢噷瀹氫綅 markdown 杈撳嚭鏍圭洰褰曘€?""
+        """在解压目录里定位 Markdown 输出根目录。"""
         md_candidates = list(extract_root.rglob('full.md'))
         if not md_candidates:
             md_candidates = list(extract_root.rglob('*.md'))
@@ -443,7 +415,7 @@ class PdfToMdNode(BaseNode):
         return source_md.parent, source_md
 
     def _copy_result_tree(self, source_root: Path, target_root: Path) -> None:
-        """鎶婅В鍘嬪嚭鐨勭粨鏋滄爲澶嶅埗鍒版渶缁堢洰褰曘€?""
+        """复制解析产物到最终目录。"""
         for child in source_root.iterdir():
             destination = target_root / child.name
             if child.is_dir():
@@ -454,8 +426,7 @@ class PdfToMdNode(BaseNode):
                 shutil.copy2(child, destination)
 
     def _get_md_paths(self, import_file_path: Path, file_dir_path: Path) -> str:
-        """鏍规嵁椤圭洰绾﹀畾鎺ㄥ鏈€缁?markdown 璺緞銆?""
+        """根据项目约定推导最终 Markdown 路径。"""
         file_name = import_file_path.stem
         md_path = file_dir_path / file_name / 'hybrid_auto' / f'{file_name}.md'
         return str(md_path)
-

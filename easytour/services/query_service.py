@@ -78,6 +78,7 @@ class QueryService:
             final_state['latency_ms']['query_total'] = elapsed_ms
 
             answer = str(final_state.get('answer') or '')
+            citations = list(final_state.get('citations') or [])
             assistant_message_id = save_chat_message(
                 session_id=session_id,
                 role='assistant',
@@ -85,6 +86,7 @@ class QueryService:
                 rewritten_query=str(final_state.get('rewritten_query') or query),
                 item_names=list(final_state.get('item_names') or []),
                 image_urls=list(final_state.get('image_urls') or []),
+                citations=citations,
             )
 
             update_task_status(task_id, TASK_STATUS_COMPLETED)
@@ -94,10 +96,18 @@ class QueryService:
             set_task_result(task_id, 'rewritten_query', str(final_state.get('rewritten_query') or query))
             set_task_result(task_id, 'item_names', list(final_state.get('item_names') or []))
             set_task_result(task_id, 'structured_answer', dict(final_state.get('structured_answer') or {}))
-            set_task_result(task_id, 'citations', list(final_state.get('citations') or []))
+            set_task_result(task_id, 'citations', citations)
 
             if is_stream:
-                push_sse_event(task_id, SSEEvent.FINAL, {})
+                push_sse_event(
+                    task_id,
+                    SSEEvent.FINAL,
+                    {
+                        'answer': answer,
+                        'image_urls': list(final_state.get('image_urls') or []),
+                        'citations': citations,
+                    },
+                )
             return final_state
         except Exception as exc:
             update_task_status(task_id, TASK_STATUS_FAILED)

@@ -205,7 +205,6 @@ class StructuredAnswerNode(BaseNode):
 
     def _build_citations(self, docs: list[dict[str, Any]]) -> list[dict[str, Any]]:
         citations: list[dict[str, Any]] = []
-        seen: set[tuple[str, str, str, str]] = set()
         for doc in docs:
             citation = {
                 'source_label_display': str(
@@ -215,17 +214,8 @@ class StructuredAnswerNode(BaseNode):
                 'city': str(doc.get('city') or ''),
                 'document_id': str(doc.get('document_id') or ''),
             }
-            key = (
-                citation['source_label_display'],
-                citation['item_name'],
-                citation['city'],
-                citation['document_id'],
-            )
-            if key in seen:
+            if not any(value for value in citation.values()):
                 continue
-            if not any(value for value in key):
-                continue
-            seen.add(key)
             citations.append(citation)
         return citations
 

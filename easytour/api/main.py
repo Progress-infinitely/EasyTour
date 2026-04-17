@@ -1,6 +1,11 @@
 from __future__ import annotations
 
 import os
+import subprocess
+import sys
+import webbrowser
+from pathlib import Path
+from urllib.parse import unquote, urlparse
 
 import uvicorn
 from fastapi import BackgroundTasks, Depends, FastAPI, Form, HTTPException, Request, UploadFile
@@ -42,6 +47,7 @@ def build_task_status_payload(task_id: str) -> dict[str, object]:
         'answer': str(get_task_result(task_id, 'answer', '') or ''),
         'error': str(get_task_result(task_id, 'error', '') or ''),
         'image_urls': list(get_task_result(task_id, 'image_urls', []) or []),
+        'citations': list(get_task_result(task_id, 'citations', []) or []),
         'file_title': str(get_task_result(task_id, 'file_title', '') or ''),
         'item_name': str(get_task_result(task_id, 'item_name', '') or ''),
         'chunk_count': int(get_task_result(task_id, 'chunk_count', 0) or 0),
@@ -49,6 +55,40 @@ def build_task_status_payload(task_id: str) -> dict[str, object]:
         'region_path': str(get_task_result(task_id, 'region_path', '') or ''),
         'doc_main_entities': list(get_task_result(task_id, 'doc_main_entities', []) or []),
     }
+
+
+def _launch_local_path(target_path: Path) -> None:
+    normalized_path = str(target_path)
+    if os.name == 'nt':
+        os.startfile(normalized_path)  # type: ignore[attr-defined]
+        return
+    if sys.platform == 'darwin':
+        subprocess.Popen(['open', normalized_path])
+        return
+    subprocess.Popen(['xdg-open', normalized_path])
+
+
+def open_source_target(source_target: str) -> dict[str, str]:
+    normalized_target = str(source_target or '').strip()
+    if not normalized_target:
+        raise FileNotFoundError('source target is empty')
+
+    parsed = urlparse(normalized_target)
+    if parsed.scheme in {'http', 'https'}:
+        webbrowser.open(normalized_target, new=2)
+        return {'target_type': 'url'}
+
+    if parsed.scheme == 'file':
+        normalized_target = unquote(parsed.path or '')
+        if parsed.netloc:
+            normalized_target = f'//{parsed.netloc}{normalized_target}'
+
+    local_path = Path(normalized_target).expanduser()
+    if not local_path.exists():
+        raise FileNotFoundError(f'source file not found: {local_path}')
+
+    _launch_local_path(local_path)
+    return {'target_type': 'file'}
 
 
 def create_app() -> FastAPI:
@@ -121,6 +161,28 @@ def create_app() -> FastAPI:
         if document is None:
             raise HTTPException(status_code=404, detail='document not found')
         return DocumentMetadataResponse(**document).model_dump()
+
+    @app.post('/documents/{document_id}/open')
+    async def open_document_source(
+        document_id: str,
+        service: DocumentService = Depends(get_document_service),
+    ) -> dict[str, str]:
+        document = service.get_document(document_id)
+        if document is None:
+            raise HTTPException(status_code=404, detail='document not found')
+
+        source_target = str(document.get('source_uri_internal') or '').strip()
+        if not source_target:
+            raise HTTPException(status_code=404, detail='document source not found')
+
+        try:
+            result = open_source_target(source_target)
+        except FileNotFoundError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f'failed to open source: {exc}') from exc
+
+        return {'message': 'source opened', **result}
 
     @app.post('/upload')
     async def upload_file(
