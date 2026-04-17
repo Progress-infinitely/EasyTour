@@ -129,7 +129,7 @@
         }
 
         .hero-copy-title {
-            font-size: clamp(2.45rem, 4.15vw, 4rem);
+            font-size: clamp(2rem, 3.2vw, 3rem);
             font-weight: 800;
             line-height: 1.08;
             letter-spacing: -0.05em;
@@ -141,9 +141,9 @@
         }
 
         .hero-copy-desc {
-            max-width: 780px;
-            font-size: clamp(1.02rem, 1.3vw, 1.35rem);
-            line-height: 1.9;
+            max-width: 720px;
+            font-size: clamp(0.92rem, 1vw, 1.1rem);
+            line-height: 1.7;
             color: #5e6f90;
             letter-spacing: -0.01em;
         }
@@ -153,12 +153,12 @@
         }
 
         .hero-stat-card {
-            min-height: 162px;
-            padding: 1.8rem 1.75rem;
+            min-height: 124px;
+            padding: 1.25rem 1.35rem;
         }
 
         .hero-stat-value {
-            font-size: clamp(2.6rem, 2.8vw, 3rem);
+            font-size: clamp(2rem, 2.2vw, 2.4rem);
             line-height: 1;
         }
 
@@ -341,7 +341,7 @@
 </head>
 <body class="min-h-screen bg-background px-4 pb-24 pt-4 text-on-surface md:px-8 md:pb-0 md:pt-6 xl:px-10">
 <!-- [修改] 导入页外层壳子和查询页彻底对齐：同一套圆角顶栏、同一套页面边距。 -->
-<header class="sticky top-4 z-50 mx-auto hidden w-full max-w-screen-2xl items-center justify-between rounded-[28px] border border-outline-variant/15 bg-surface-container-lowest/88 px-7 py-4 text-primary shadow-[0_20px_40px_rgba(25,28,30,0.06)] backdrop-blur-md md:flex md:top-6">
+<header class="sticky top-4 z-50 mx-auto hidden w-full max-w-[1400px] items-center justify-between rounded-[28px] border border-outline-variant/15 bg-surface-container-lowest/88 px-7 py-4 text-primary shadow-[0_20px_40px_rgba(25,28,30,0.06)] backdrop-blur-md md:flex md:top-6">
     <a class="flex items-center gap-3" href="/import">
         <img alt="EasyTour Logo" class="brand-logo" onerror="this.onerror=null;this.src='/logo.png';" src="/front/logo.png">
         <div>
@@ -367,50 +367,50 @@
 </header>
 
 <!-- [修改] 只重做导入页内容区，页面框架和导航保持不变 -->
-<main class="mx-auto mt-6 w-full max-w-screen-2xl pb-10">
-    <section class="grid gap-8 xl:grid-cols-[1.28fr_1fr] xl:items-center">
-        <div class="pt-4 xl:pt-5">
+<main class="mx-auto mt-4 w-full max-w-[1400px] pb-8">
+    <section class="grid gap-6 xl:grid-cols-[1.28fr_1fr] xl:items-center">
+        <div class="pt-2 xl:pt-3">
             <!-- [修改] 顶部文案区直接按用户给的视觉稿实现，不再使用之前的大段说明文案。 -->
             <h1 class="font-headline hero-copy-title">
                 让知识库<span class="hero-copy-accent">有备而来</span>
             </h1>
-            <p class="hero-copy-desc mt-5">
+            <p class="hero-copy-desc mt-4">
                 上传景区资料、线路、酒店、美食与交通指南。系统会完成解析、切片、向量化，并实时追踪每一条任务的进度。
             </p>
         </div>
 
-        <div class="hero-stats-grid grid gap-5 sm:grid-cols-3">
-            <div class="hero-stat-card stat-card ambient-shadow rounded-[28px] border border-outline-variant/15 bg-surface-container-lowest">
+        <div class="hero-stats-grid grid gap-4 sm:grid-cols-3">
+            <div class="hero-stat-card stat-card ambient-shadow rounded-[24px] border border-outline-variant/15 bg-surface-container-lowest">
                 <div class="text-xs font-label font-semibold uppercase tracking-[0.16em] text-secondary">本地任务</div>
-                <div class="hero-stat-value mt-5 font-extrabold text-on-surface" id="heroTaskCount">0</div>
-                <div class="mt-3 text-sm font-medium text-success-text" id="heroTaskMeta">等待导入</div>
+                <div class="hero-stat-value mt-3 font-extrabold text-on-surface" id="heroTaskCount">0</div>
+                <div class="mt-2 text-sm font-medium text-success-text" id="heroTaskMeta">等待导入</div>
             </div>
-            <div class="hero-stat-card stat-card ambient-shadow rounded-[28px] border border-outline-variant/15 bg-surface-container-lowest">
+            <div class="hero-stat-card stat-card ambient-shadow rounded-[24px] border border-outline-variant/15 bg-surface-container-lowest">
                 <div class="text-xs font-label font-semibold uppercase tracking-[0.16em] text-secondary">成功导入率</div>
-                <div class="hero-stat-value mt-5 font-extrabold text-on-surface" id="heroSuccessRate">0%</div>
-                <div class="mt-3 text-sm font-medium text-success-text" id="heroSuccessMeta">已完成 0 / 0</div>
+                <div class="hero-stat-value mt-3 font-extrabold text-on-surface" id="heroSuccessRate">0%</div>
+                <div class="mt-2 text-sm font-medium text-success-text" id="heroSuccessMeta">已完成 0 / 0</div>
             </div>
-            <div class="hero-stat-card stat-card ambient-shadow rounded-[28px] border border-outline-variant/15 bg-surface-container-lowest">
+            <div class="hero-stat-card stat-card ambient-shadow rounded-[24px] border border-outline-variant/15 bg-surface-container-lowest">
                 <div class="text-xs font-label font-semibold uppercase tracking-[0.16em] text-secondary">进行中任务</div>
-                <div class="hero-stat-value mt-5 font-extrabold text-on-surface" id="heroRunningCount">0</div>
-                <div class="mt-3 text-sm font-medium text-secondary" id="heroRunningMeta">暂无后台处理</div>
+                <div class="hero-stat-value mt-3 font-extrabold text-on-surface" id="heroRunningCount">0</div>
+                <div class="mt-2 text-sm font-medium text-secondary" id="heroRunningMeta">暂无后台处理</div>
             </div>
         </div>
     </section>
 
-    <section class="mt-8 grid gap-5 xl:grid-cols-[1.9fr_0.76fr]">
-        <div id="dropZone" class="upload-sheen ambient-shadow relative overflow-hidden rounded-[30px] border border-outline-variant/15 bg-surface-container-lowest px-6 py-12 text-center sm:px-10 sm:py-16">
+    <section class="mt-6 grid gap-4 xl:grid-cols-[1.9fr_0.76fr]">
+        <div id="dropZone" class="upload-sheen ambient-shadow relative overflow-hidden rounded-[28px] border border-outline-variant/15 bg-surface-container-lowest px-6 py-8 text-center sm:px-10 sm:py-10">
             <input id="fileInput" class="hidden" type="file" accept=".pdf,.md" multiple>
             <div class="relative z-10">
-                <div class="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-primary-fixed text-primary shadow-[0_18px_32px_rgba(28,63,149,0.08)]">
-                    <span class="material-symbols-outlined text-5xl">cloud_upload</span>
+                <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary-fixed text-primary shadow-[0_18px_32px_rgba(28,63,149,0.08)]">
+                    <span class="material-symbols-outlined text-4xl">cloud_upload</span>
                 </div>
-                <h2 class="mt-9 text-3xl font-bold tracking-tight text-on-surface">拖拽文件到这里，或者直接点一下上传</h2>
-                <p class="mx-auto mt-4 max-w-3xl text-base leading-8 text-secondary">
+                <h2 class="mt-5 text-2xl font-bold tracking-tight text-on-surface">拖拽文件到这里，或者直接点一下上传</h2>
+                <p class="mx-auto mt-3 max-w-2xl text-sm leading-7 text-secondary">
                     文件推荐：<strong>旅游 PDF</strong>、<strong>Markdown</strong>。当前后端真实支持 <strong>PDF / MD</strong>，单文件建议控制在 <strong>50MB</strong> 内。
                 </p>
-                <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
-                    <button id="pickFileBtn" class="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-primary-container px-7 py-3 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(28,63,149,0.2)] transition-all hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgba(28,63,149,0.24)]" type="button">
+                <div class="mt-5 flex flex-wrap items-center justify-center gap-3">
+                    <button id="pickFileBtn" class="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-primary-container px-6 py-2.5 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(28,63,149,0.2)] transition-all hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgba(28,63,149,0.24)]" type="button">
                         <span class="material-symbols-outlined text-base">cloud_upload</span>
                         上传文件
                     </button>
@@ -419,30 +419,30 @@
             </div>
         </div>
 
-        <aside class="ambient-shadow rounded-[30px] border border-outline-variant/15 bg-surface-container-lowest px-6 py-6">
+        <aside class="ambient-shadow rounded-[28px] border border-outline-variant/15 bg-surface-container-lowest px-5 py-5">
             <div class="flex items-start justify-between gap-4">
                 <div>
-                    <h2 class="text-2xl font-bold tracking-tight text-primary">导入任务</h2>
-                    <p class="mt-2 text-sm leading-6 text-secondary">右侧只看摘要，下面的大表会展示完整进度和元数据。</p>
+                    <h2 class="text-xl font-bold tracking-tight text-primary">导入任务</h2>
+                    <p class="mt-1 text-xs leading-6 text-secondary">右侧只看摘要，下面的大表会展示完整进度和元数据。</p>
                 </div>
             </div>
 
-            <div class="mt-6 flex flex-wrap gap-2">
+            <div class="mt-4 flex flex-wrap gap-2">
                 <button class="task-segment active" data-side-filter="processing" type="button">进行中 <span data-filter-count="processing">(0)</span></button>
                 <button class="task-segment" data-side-filter="completed" type="button">已完成 <span data-filter-count="completed">(0)</span></button>
                 <button class="task-segment" data-side-filter="failed" type="button">已失败 <span data-filter-count="failed">(0)</span></button>
             </div>
 
-            <div id="taskFeed" class="mt-5 space-y-3"></div>
+            <div id="taskFeed" class="mt-4 space-y-3"></div>
 
-            <button id="clearTasksBtn" class="mt-6 inline-flex items-center gap-2 text-sm font-medium text-secondary transition-colors hover:text-primary" type="button">
+            <button id="clearTasksBtn" class="mt-4 inline-flex items-center gap-2 text-sm font-medium text-secondary transition-colors hover:text-primary" type="button">
                 <span class="material-symbols-outlined text-base">delete_sweep</span>
                 清空本地任务记录
             </button>
         </aside>
     </section>
 
-    <section class="ambient-shadow mt-5 overflow-hidden rounded-[30px] border border-outline-variant/15 bg-surface-container-lowest">
+    <section class="ambient-shadow mt-4 overflow-hidden rounded-[28px] border border-outline-variant/15 bg-surface-container-lowest">
         <div class="border-b border-outline-variant/15 px-5 py-5 md:px-6">
             <div class="flex flex-col gap-4 2xl:flex-row 2xl:items-start 2xl:justify-between">
                 <div class="flex-1">
