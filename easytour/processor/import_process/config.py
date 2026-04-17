@@ -100,10 +100,10 @@ class ImportConfig:
     #
     # 它们决定导入结果最终写到哪里。
     milvus_url: str = field(default_factory=lambda: os.getenv('MILVUS_URL', ''))
-    # [修改] 和查询链默认 collection 对齐，避免导入写到旧表名、查询读新表名。
-    chunks_collection: str = field(default_factory=lambda: os.getenv('CHUNKS_COLLECTION', 'kb_chunks_api_v1'))
-    item_name_collection: str = field(default_factory=lambda: os.getenv('ITEM_NAME_COLLECTION', 'kb_item_names_api_v1'))
-    entity_name_collection: str = field(default_factory=lambda: os.getenv('ENTITY_NAME_COLLECTION', 'kb_entity_names_api_v1'))
+    # [修改] 和查询链默认 collection 对齐，并切到 EasyTour 独立命名，避免继续写进旧项目表。
+    chunks_collection: str = field(default_factory=lambda: os.getenv('CHUNKS_COLLECTION', 'easytour_chunks_v1'))
+    item_name_collection: str = field(default_factory=lambda: os.getenv('ITEM_NAME_COLLECTION', 'easytour_item_names_v1'))
+    entity_name_collection: str = field(default_factory=lambda: os.getenv('ENTITY_NAME_COLLECTION', 'easytour_entity_names_v1'))
 
     minio_endpoint: str = field(default_factory=lambda: os.getenv('MINIO_ENDPOINT', ''))
     minio_access_key: str = field(default_factory=lambda: os.getenv('MINIO_ACCESS_KEY', ''))

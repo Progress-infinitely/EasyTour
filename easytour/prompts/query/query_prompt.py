@@ -1,6 +1,5 @@
-"""Prompt constants used by the Stage 2 query pipeline."""
+"""查询链 Prompt 常量：主体识别 / HyDE / 分意图回答模板。"""
 
-# [修改] 重写查询链 prompt，去掉乱码并对齐 Stage 2 节点的输入输出约定。
 ITEM_NAME_EXTRACT_SYSTEM_PROMPT = """
 你是 EasyTour 的主体识别助手。
 请结合历史消息和当前问题，提取用户正在询问的景点、酒店、路线、餐厅、交通节点或别名，并补全一个脱离上下文也能独立理解的问题。
@@ -68,11 +67,59 @@ RERANK_TASK_INSTRUCTION = (
     '请优先保留与用户问题最相关、信息最完整、最像原始旅游资料正文的文档片段。'
 )
 
+# ---------------------------------------------------------------------------
+# 按 answer_intent 分类的回答指令（注入 ANSWER_PROMPT 的 intent_instruction 字段）
+# ---------------------------------------------------------------------------
+
+_INTENT_INSTRUCTIONS: dict[str, str] = {
+    'lookup': (
+        '用户在查询具体事实信息。请优先给出准确事实（开放时间、门票价格、地址等），'
+        '并注明信息来源于哪条上下文。若上下文没有明确数据，请如实说明信息不足，不得编造。'
+    ),
+    'recommendation': (
+        '用户在寻求推荐。请按以下格式逐条列出推荐项：\n'
+        '- 名称：XXX\n'
+        '- 推荐理由：（结合景色/特色/口碑等，50 字以内）\n'
+        '- 适合人群：（如亲子/情侣/老人/独行等，若上下文提及）\n'
+        '- 最佳季节：（若上下文提及）\n'
+        '推荐数量 3–5 条，优先选有完整信息的主体。'
+    ),
+    'planning': (
+        '用户在请求行程规划。请按天数逐日输出行程安排，每日格式：\n'
+        '第 N 天：上午 → 下午 → 晚上（每段 30 字以内）\n'
+        '若天数信息来自用户问题，务必与用户要求一致。最后附一行预算提示（若上下文有）。'
+    ),
+    'comparison': (
+        '用户在对比多个选项。请按维度逐行给出对比，格式：\n'
+        '| 维度 | 选项A | 选项B |\n'
+        '维度建议包含：价格、交通便利性、适合人群、特色亮点、注意事项。'
+        '最后给出简短结论（不超过 50 字）。'
+    ),
+    'howto': (
+        '用户在询问操作方法或流程。请按步骤逐条给出，格式：\n'
+        '步骤 1：...\n步骤 2：...\n'
+        '若有注意事项，在步骤后单独列出"注意事项"小节。'
+    ),
+    'generic': (
+        '请优先给出简洁直接的回答。如上下文不足，可适当补充常识，但须注明哪些是补充判断。'
+    ),
+}
+
+
+def get_intent_instruction(answer_intent: str) -> str:
+    """返回指定 answer_intent 对应的回答指令字符串。"""
+    return _INTENT_INSTRUCTIONS.get(answer_intent, _INTENT_INSTRUCTIONS['generic'])
+
 
 __all__ = [
     'ANSWER_PROMPT',
+    'INTENT_INSTRUCTIONS',
     'ITEM_NAME_EXTRACT_SYSTEM_PROMPT',
     'ITEM_NAME_EXTRACT_TEMPLATE',
     'RERANK_TASK_INSTRUCTION',
     'USER_HYDE_PROMPT_TEMPLATE',
+    'get_intent_instruction',
 ]
+
+# 保留向后兼容别名
+INTENT_INSTRUCTIONS = _INTENT_INSTRUCTIONS

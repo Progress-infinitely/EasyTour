@@ -4,10 +4,13 @@ from typing import Any
 
 from easytour.processor.query_process.base import BaseNode
 from easytour.processor.query_process.state import QueryGraphState
-from easytour.prompts.query.query_prompt import ANSWER_PROMPT
+from easytour.prompts.query.query_prompt import ANSWER_PROMPT, get_intent_instruction
 from easytour.schema.meta_schema import AnswerIntent
+from easytour.services.trace_service import TraceService
 from easytour.utils.providers.provider_factory import get_llm_provider
 from easytour.utils.sse_util import SSEEvent, push_sse_event
+
+_trace_service = TraceService()
 
 
 class StructuredAnswerNode(BaseNode):
@@ -51,12 +54,30 @@ class StructuredAnswerNode(BaseNode):
                 },
             )
 
-        return {
+        result: QueryGraphState = {
             'prompt': prompt,
             'answer': answer,
             'structured_answer': structured_answer,
             'citations': citations,
         }
+
+        _trace_service.record({
+            'task_id': str(state.get('task_id') or ''),
+            'session_id': str(state.get('session_id') or ''),
+            'original_query': str(state.get('original_query') or ''),
+            'rewritten_query': query,
+            'retrieval_type': str(state.get('retrieval_type') or ''),
+            'answer_intent': answer_intent,
+            'region_filter': dict(state.get('region_filter') or {}),
+            'milvus_expr': str(state.get('retrieval_filters') or ''),
+            'topk_chunk_ids': list(state.get('topk_chunk_ids') or []),
+            'topk_scores': list(state.get('topk_scores') or []),
+            'reranked_chunk_ids': list(state.get('reranked_chunk_ids') or []),
+            'model_name': str(self.config.default_model or ''),
+            'latency_ms': dict(state.get('latency_ms') or {}),
+        })
+
+        return result
 
     def _generate_answer(self, *, prompt: str, task_id: str, is_stream: bool) -> str:
         try:
@@ -89,13 +110,7 @@ class StructuredAnswerNode(BaseNode):
         history: list[dict[str, Any]],
         docs: list[dict[str, Any]],
     ) -> str:
-        intent_instruction = {
-            AnswerIntent.LOOKUP.value: '优先给出准确事实，并明确说明这些事实来自哪些上下文。',
-            AnswerIntent.RECOMMENDATION.value: '优先给出推荐项，并说明每个推荐的理由和适用场景。',
-            AnswerIntent.PLANNING.value: '优先给出可以直接执行的行程或路线安排。',
-            AnswerIntent.COMPARISON.value: '优先给出对比维度、差异点和结论。',
-            AnswerIntent.HOWTO.value: '优先给出步骤化建议或操作说明。',
-        }.get(answer_intent, '优先给出简洁直接的回答。')
+        intent_instruction = get_intent_instruction(answer_intent)
         return ANSWER_PROMPT.format(
             answer_intent=answer_intent,
             intent_instruction=intent_instruction,
@@ -114,33 +129,78 @@ class StructuredAnswerNode(BaseNode):
         item_names: list[str],
     ) -> dict[str, Any]:
         if answer_intent == AnswerIntent.LOOKUP.value:
-            return {
-                'answer': answer,
-                'facts': {
-                    'matched_items': item_names,
-                    'source_count': len(docs),
-                },
-            }
+            # 从命中的 chunk 中聚合事实字段（取首个非空值）
+            facts: dict[str, Any] = {'matched_items': item_names, 'source_count': len(docs)}
+            for field in ('opening_hours', 'ticket_price', 'best_season', 'price_range'):
+                for doc in docs:
+                    val = doc.get(field)
+                    if val and str(val).strip():
+                        facts[field] = str(val).strip()
+                        break
+            for list_field in ('tips', 'notes'):
+                merged: list[str] = []
+                seen_tips: set[str] = set()
+                for doc in docs:
+                    for item in (doc.get(list_field) or []):
+                        s = str(item).strip()
+                        if s and s not in seen_tips:
+                            merged.append(s)
+                            seen_tips.add(s)
+                if merged:
+                    facts[list_field] = merged[:5]
+            return {'answer': answer, 'facts': facts}
+
         if answer_intent == AnswerIntent.RECOMMENDATION.value:
-            recommendations = []
-            for doc in docs[:3]:
-                recommendations.append(
-                    {
-                        'name': str(doc.get('item_name') or doc.get('primary_item_name') or doc.get('title') or ''),
-                        'reason': str(doc.get('content') or '')[:120],
-                        'city': str(doc.get('city') or ''),
-                    }
-                )
-            return {
-                'answer': answer,
-                'recommendations': recommendations,
-            }
+            seen_names: set[str] = set()
+            recommendations: list[dict[str, Any]] = []
+            for doc in docs:
+                name = str(doc.get('primary_item_name') or doc.get('item_name') or doc.get('title') or '').strip()
+                if not name or name in seen_names:
+                    continue
+                seen_names.add(name)
+                rec: dict[str, Any] = {
+                    'name': name,
+                    'reason': str(doc.get('content') or '')[:150].strip(),
+                    'city': str(doc.get('city') or ''),
+                }
+                if doc.get('best_season'):
+                    rec['best_season'] = str(doc['best_season'])
+                suitable = doc.get('suitable_for') or []
+                if suitable:
+                    rec['suitable_for'] = list(suitable)[:3]
+                if doc.get('attraction_features'):
+                    rec['features'] = list(doc['attraction_features'])[:3]
+                recommendations.append(rec)
+                if len(recommendations) >= 5:
+                    break
+            return {'answer': answer, 'recommendations': recommendations}
+
         if answer_intent == AnswerIntent.PLANNING.value:
-            return {'answer': answer, 'itinerary': []}
+            route_info: dict[str, Any] = {}
+            for doc in docs:
+                if doc.get('route_days') and not route_info.get('days'):
+                    route_info['days'] = str(doc['route_days'])
+                if doc.get('route_budget') and not route_info.get('budget'):
+                    route_info['budget'] = str(doc['route_budget'])
+            result: dict[str, Any] = {'answer': answer, 'itinerary': []}
+            if route_info:
+                result.update(route_info)
+            return result
+
         if answer_intent == AnswerIntent.COMPARISON.value:
             return {'answer': answer, 'comparison_table': []}
+
         if answer_intent == AnswerIntent.HOWTO.value:
-            return {'answer': answer, 'steps': []}
+            all_tips: list[str] = []
+            seen_t: set[str] = set()
+            for doc in docs:
+                for t in (doc.get('tips') or []):
+                    s = str(t).strip()
+                    if s and s not in seen_t:
+                        all_tips.append(s)
+                        seen_t.add(s)
+            return {'answer': answer, 'steps': [], 'tips': all_tips[:5]}
+
         return {'answer': answer}
 
     def _build_citations(self, docs: list[dict[str, Any]]) -> list[dict[str, Any]]:

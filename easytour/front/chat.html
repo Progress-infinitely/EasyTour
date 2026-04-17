@@ -299,6 +299,20 @@
       </div>
     </div>
 
+    <div style="padding:6px 16px 2px; display:flex; gap:8px; flex-wrap:wrap;">
+      <select id="filterRegion" style="background:#1e293b; color:#94a3b8; border:1px solid rgba(255,255,255,0.1); border-radius:6px; padding:4px 8px; font-size:12px; flex:1; min-width:100px;">
+        <option value="">地区：全部</option>
+      </select>
+      <select id="filterType" style="background:#1e293b; color:#94a3b8; border:1px solid rgba(255,255,255,0.1); border-radius:6px; padding:4px 8px; font-size:12px; flex:1; min-width:100px;">
+        <option value="">类型：全部</option>
+        <option value="attraction">景点</option>
+        <option value="route">路线</option>
+        <option value="hotel">酒店</option>
+        <option value="food">美食</option>
+        <option value="transport">交通</option>
+        <option value="culture">文化</option>
+      </select>
+    </div>
     <div class="composer">
       <textarea id="input" placeholder="请输入问题（Enter 发送，Shift+Enter 换行）"></textarea>
       <button class="send" id="send">发送</button>
@@ -628,7 +642,20 @@
       }
     }
 
-    function finalizeBotAnswer(botMsgEl, answer, error, imageUrls){
+    function renderCitations(citations){
+      if(!Array.isArray(citations) || citations.length === 0) return null;
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'margin-top:8px; font-size:12px; color:#64748b; border-top:1px solid rgba(255,255,255,0.06); padding-top:6px;';
+      wrap.innerHTML = '<span style="color:#475569;">来源：</span>' +
+        citations.map(c => {
+          const label = c.source_label_display || c.item_name || '—';
+          const city = c.city ? ` · ${c.city}` : '';
+          return `<span style="display:inline-block; background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.2); border-radius:4px; padding:1px 6px; margin:2px 3px 2px 0; color:#94a3b8;">${escapeHtml(label)}${escapeHtml(city)}</span>`;
+        }).join('');
+      return wrap;
+    }
+
+    function finalizeBotAnswer(botMsgEl, answer, error, imageUrls, citations){
       const bubble = botMsgEl.querySelector('.bubble');
       const progress = botMsgEl.querySelector('details.progress');
       const err = (error || '').trim();
@@ -651,13 +678,15 @@
       const progressEl = progress ? progress : null;
       if(progressEl) {
         progressEl.remove();
-        progressEl.removeAttribute('open'); // 完成后自动收起
+        progressEl.removeAttribute('open');
       }
       bubble.textContent = '';
       const answerEl = document.createElement('div');
       answerEl.className = 'answer';
       bubble.appendChild(answerEl);
       renderAnswerWithImages(answerEl, answer || '', imageUrls || []);
+      const citEl = renderCitations(citations);
+      if(citEl) bubble.appendChild(citEl);
       if(progressEl) bubble.appendChild(progressEl);
     }
 
@@ -684,20 +713,40 @@
 
     async function submitQuery(text){
       const isStream = streamToggle.checked;
+      const filterRegion = document.getElementById('filterRegion').value.trim();
+      const filterType = document.getElementById('filterType').value.trim();
+      const body = {
+        query: text,
+        session_id: sessionId,
+        is_stream: isStream,
+      };
+      if(filterRegion) body.region = filterRegion;
+      if(filterType) body.retrieval_type = filterType;
       const res = await fetch(`${API_BASE}/query`, {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({
-          query: text,
-          session_id: sessionId,
-          is_stream: isStream
-        })
+        body: JSON.stringify(body)
       });
       if(!res.ok){
         const msg = await res.text();
         throw new Error(msg || '请求失败');
       }
       return await res.json();
+    }
+
+    async function loadRegionOptions(){
+      try{
+        const res = await fetch(`${API_BASE}/meta/regions`);
+        if(!res.ok) return;
+        const items = await res.json();
+        const sel = document.getElementById('filterRegion');
+        for(const item of items){
+          const opt = document.createElement('option');
+          opt.value = item.value;
+          opt.textContent = `地区：${item.label}`;
+          sel.appendChild(opt);
+        }
+      }catch(_){}
     }
 
     async function poll(taskId, botMsgEl){
@@ -744,10 +793,8 @@
         renderProgress(botMsgEl, [], [], 'pending');
 
         if (!isStream) {
-          // 非流式：直接拿到结果
-          // data: { session_id, answer, done_list, error, message }
           renderProgress(botMsgEl, data.done_list || [], [], 'completed');
-          finalizeBotAnswer(botMsgEl, data.answer, data.error, data.image_urls || []);
+          finalizeBotAnswer(botMsgEl, data.answer, data.error, data.image_urls || [], data.citations || []);
           sendBtn.disabled = false;
           return;
         }
@@ -812,16 +859,23 @@
         });
 
         es.addEventListener('final_answer', (e) => {
-           // 响应用户的 final_answer 信号，确保图片渲染
           const typing = botMsgEl.querySelector('.typing');
           if(typing) typing.remove();
           const progress = botMsgEl.querySelector('details.progress');
           if(progress) progress.removeAttribute('open');
-          
+
           try{
             const d = JSON.parse(e.data || '{}');
             const finalText = (d && typeof d.answer === 'string' && d.answer.trim().length > 0) ? d.answer : (rawAnswerText || answerEl.textContent || '');
             renderAnswerWithImages(answerEl, finalText, d.image_urls || []);
+            const citEl = renderCitations(d.citations || []);
+            if(citEl){
+              const bubble = botMsgEl.querySelector('.bubble');
+              const existingCit = bubble.querySelector('.cit-block');
+              if(existingCit) existingCit.remove();
+              citEl.classList.add('cit-block');
+              bubble.appendChild(citEl);
+            }
           }catch(_){}
           es.close();
           sendBtn.disabled = false;
@@ -883,6 +937,7 @@
     });
 
     loadHistory();
+    loadRegionOptions();
     setTimeout(() => inputEl.focus(), 200);
   </script>
 </body>

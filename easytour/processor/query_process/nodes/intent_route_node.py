@@ -10,7 +10,7 @@ from easytour.processor.query_process.base import BaseNode
 from easytour.processor.query_process.state import QueryGraphState
 from easytour.schema.meta_schema import AnswerIntent, ContentType
 from easytour.utils.providers.provider_factory import get_llm_provider
-from easytour.utils.region_normalizer import infer_region
+from easytour.utils.region_normalizer import normalize_region
 
 
 class IntentRouteNode(BaseNode):
@@ -85,17 +85,11 @@ class IntentRouteNode(BaseNode):
         region_filter = payload.get('region_filter') or {}
         if not isinstance(region_filter, dict):
             region_filter = {}
-        region_seed = ' '.join(
-            str(region_filter.get(key) or '').strip()
-            for key in ('province', 'city', 'region_path')
-            if str(region_filter.get(key) or '').strip()
-        )
-        inferred_region = infer_region(region_seed, query).to_dict()
 
         return {
             'retrieval_type': retrieval_type,
             'answer_intent': answer_intent,
-            'region_filter': inferred_region,
+            'region_filter': self._derive_route_region_filter(region_filter, query),
             'rewritten_query': str(payload.get('rewritten_query') or query).strip() or query,
         }
 
@@ -132,9 +126,37 @@ class IntentRouteNode(BaseNode):
         return {
             'retrieval_type': retrieval_type,
             'answer_intent': answer_intent,
-            'region_filter': infer_region(query, query).to_dict(),
+            'region_filter': self._derive_route_region_filter({}, query),
             'rewritten_query': query,
         }
+
+    @staticmethod
+    def _derive_route_region_filter(region_filter: dict[str, Any], query: str) -> dict[str, str]:
+        region_seed = ' '.join(
+            str(region_filter.get(key) or '').strip()
+            for key in ('province', 'city', 'region_path')
+            if str(region_filter.get(key) or '').strip()
+        )
+
+        if region_seed:
+            normalized = normalize_region(region_seed)
+            if normalized.province or normalized.city:
+                return {
+                    'province': normalized.province,
+                    'city': normalized.city,
+                    'region_path': normalized.region_path,
+                }
+
+        fallback = normalize_region(query)
+        if fallback.province or fallback.city:
+            return {
+                'province': fallback.province,
+                'city': fallback.city,
+                'region_path': fallback.region_path,
+            }
+
+        # [修改] 没识别出明确地区时直接留空，避免把整句 query 当成 region_path 继续往下过滤。
+        return {'province': '', 'city': '', 'region_path': ''}
 
     @staticmethod
     def _parse_json_payload(content: Any) -> dict[str, Any]:

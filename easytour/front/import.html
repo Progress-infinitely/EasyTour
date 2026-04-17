@@ -330,6 +330,40 @@
         <input type="file" id="fileInput" class="file-input"  accept=".pdf,.md">
     </div>
 
+    <details id="overridePanel" style="margin-top:14px; background:rgba(15,23,42,0.4); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:14px 16px;">
+        <summary style="cursor:pointer; color:#94a3b8; font-size:13px; font-weight:500; outline:none;">⚙️ 可选参数（content_type / 地区 / force 模式）</summary>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px;">
+            <div>
+                <label style="font-size:12px; color:#94a3b8; display:block; margin-bottom:4px;">文档类型 (content_type)</label>
+                <select id="ov_content_type" style="width:100%; background:#1e293b; color:#e2e8f0; border:1px solid rgba(255,255,255,0.12); border-radius:6px; padding:6px 8px; font-size:13px;">
+                    <option value="">— 自动识别 —</option>
+                    <option value="attraction">景点 (attraction)</option>
+                    <option value="route">路线 (route)</option>
+                    <option value="hotel">酒店 (hotel)</option>
+                    <option value="food">美食 (food)</option>
+                    <option value="transport">交通 (transport)</option>
+                    <option value="culture">文化 (culture)</option>
+                </select>
+            </div>
+            <div>
+                <label style="font-size:12px; color:#94a3b8; display:block; margin-bottom:4px;">地区 (region)</label>
+                <input id="ov_region" type="text" placeholder="如：三亚 / 海南/三亚" style="width:100%; box-sizing:border-box; background:#1e293b; color:#e2e8f0; border:1px solid rgba(255,255,255,0.12); border-radius:6px; padding:6px 8px; font-size:13px;" />
+            </div>
+            <div>
+                <label style="font-size:12px; color:#94a3b8; display:block; margin-bottom:4px;">文档标题 (document_title)</label>
+                <input id="ov_document_title" type="text" placeholder="留空则自动提取" style="width:100%; box-sizing:border-box; background:#1e293b; color:#e2e8f0; border:1px solid rgba(255,255,255,0.12); border-radius:6px; padding:6px 8px; font-size:13px;" />
+            </div>
+            <div>
+                <label style="font-size:12px; color:#94a3b8; display:block; margin-bottom:4px;">强制模式 (force)</label>
+                <select id="ov_force" style="width:100%; background:#1e293b; color:#e2e8f0; border:1px solid rgba(255,255,255,0.12); border-radius:6px; padding:6px 8px; font-size:13px;">
+                    <option value="">— 默认（判重） —</option>
+                    <option value="metadata_only">仅更新元数据 (metadata_only)</option>
+                    <option value="reindex">强制重建索引 (reindex)</option>
+                </select>
+            </div>
+        </div>
+    </details>
+
     <div id="fileList" class="file-list">
     </div>
 </div>
@@ -424,11 +458,18 @@
 
         const formData = new FormData();
         formData.append('file', file);
+        const ovContentType = document.getElementById('ov_content_type').value;
+        const ovRegion = document.getElementById('ov_region').value.trim();
+        const ovDocumentTitle = document.getElementById('ov_document_title').value.trim();
+        const ovForce = document.getElementById('ov_force').value;
+        if (ovContentType) formData.append('content_type', ovContentType);
+        if (ovRegion) formData.append('region', ovRegion);
+        if (ovDocumentTitle) formData.append('document_title', ovDocumentTitle);
+        if (ovForce) formData.append('force', ovForce);
 
         try {
             progressWrapper.style.display = 'block';
 
-            // 使用动态的 totalNodes 计算基础上传进度
             const uploadPercentage = (1 / totalNodes) * 100;
             updateProgressUI(progressWrapper, Math.min(uploadPercentage, 10));
 
@@ -442,16 +483,41 @@
                 body: formData
             });
 
-            if (!response.ok) throw new Error('Upload failed');
-
             const result = await response.json();
-            const taskId = result.task_id;
 
+            // 409 requires_reindex
+            if (response.status === 409) {
+                statusBadge.textContent = '需重建索引';
+                statusBadge.className = 'status-badge status-error';
+                updateProgressUI(progressWrapper, 0);
+                const errLog = document.createElement('li');
+                errLog.textContent = `⚠️ content_type 已变更，请选择 force=reindex 后重新提交 (document_id: ${result.document_id || ''})`;
+                errLog.style.color = "#f59e0b";
+                logListEl.appendChild(errLog);
+                return;
+            }
+
+            if (!response.ok) throw new Error(`Upload failed: ${response.status}`);
+
+            // 判重 short-circuit
+            if (result.status === 'already_imported') {
+                statusBadge.textContent = '已存在';
+                statusBadge.className = 'status-badge status-completed';
+                updateProgressUI(progressWrapper, 100);
+                const docRes = await fetch(`${API_BASE}/documents/${result.document_id}`).then(r => r.ok ? r.json() : null);
+                const infoLog = document.createElement('li');
+                infoLog.textContent = `✅ 文档已导入，document_id: ${result.document_id}` +
+                    (docRes ? `，地区: ${docRes.region_path || '—'}，类型: ${docRes.content_type || '—'}` : '');
+                infoLog.className = 'log-done';
+                logListEl.appendChild(infoLog);
+                return;
+            }
+
+            const taskId = result.task_id;
             updateProgressUI(progressWrapper, uploadPercentage);
             statusBadge.textContent = '处理中';
             statusBadge.className = 'status-badge status-processing';
 
-            // 把专属的 totalNodes 传给轮询函数
             pollStatus(taskId, itemEl, totalNodes);
 
         } catch (error) {

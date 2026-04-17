@@ -35,7 +35,11 @@ _CITY_TO_PROVINCE = {
     '武汉': '湖北',
 }
 
-_PROVINCE_SUFFIXES = ('省', '市', '自治区', '特别行政区', '壮族自治区', '回族自治区', '维吾尔自治区')
+_MUNICIPALITIES = {'北京', '上海', '天津', '重庆'}
+_KNOWN_CITIES = sorted(_CITY_TO_PROVINCE.keys(), key=len, reverse=True)
+_KNOWN_PROVINCES = sorted({*_CITY_TO_PROVINCE.values(), *_MUNICIPALITIES}, key=len, reverse=True)
+
+_PROVINCE_SUFFIXES = ('省', '自治区', '特别行政区', '壮族自治区', '回族自治区', '维吾尔自治区')
 _CITY_SUFFIXES = ('市', '州', '地区', '盟', '县')
 
 
@@ -62,42 +66,47 @@ def _normalize_token(token: str) -> str:
     return re.sub(r'[\s/\\>\-|]+', '', token or '').strip()
 
 
+def _pick_known_region_token(tokens: list[str], names: list[str], suffixes: tuple[str, ...]) -> str:
+    for token in tokens:
+        normalized = _strip_suffix(token, suffixes)
+        if normalized in names:
+            return normalized
+    return ''
+
+
+def _find_known_region_name(text: str, names: list[str]) -> str:
+    for name in names:
+        if name and name in text:
+            return name
+    return ''
+
+
 def normalize_region(region_text: str | None) -> RegionInfo:
     text = (region_text or '').strip()
     if not text:
         return RegionInfo()
 
     cleaned = text.replace('，', '/').replace(',', '/').replace('>', '/').replace(' - ', '/')
-    tokens = [_normalize_token(token) for token in re.split(r'[/]+', cleaned) if _normalize_token(token)]
+    # [修改] LLM 常把 province/city/region_path 用空格拼起来，这里统一按空白和分隔符切 token。
+    tokens = [_normalize_token(token) for token in re.split(r'[/\s]+', cleaned) if _normalize_token(token)]
 
-    province = ''
-    city = ''
-    for token in tokens:
-        if not province and token.endswith(_PROVINCE_SUFFIXES):
-            province = _strip_suffix(token, _PROVINCE_SUFFIXES)
-            continue
-        if not city and token.endswith(_CITY_SUFFIXES):
-            city = _strip_suffix(token, _CITY_SUFFIXES)
-            continue
-        if not city and token in _CITY_TO_PROVINCE:
-            city = token
-            continue
-        if not province and token in set(_CITY_TO_PROVINCE.values()):
-            province = token
+    city = _pick_known_region_token(tokens, _KNOWN_CITIES, _CITY_SUFFIXES)
+    province = _pick_known_region_token(tokens, _KNOWN_PROVINCES, _PROVINCE_SUFFIXES)
 
     if not city:
-        city_match = re.search(r'([\u4e00-\u9fa5]{2,6})市', text)
-        if city_match:
-            city = _strip_suffix(city_match.group(1), _CITY_SUFFIXES)
+        city = _find_known_region_name(text, _KNOWN_CITIES)
     if not province:
-        province_match = re.search(r'([\u4e00-\u9fa5]{2,8})(省|自治区|特别行政区|市)', text)
-        if province_match:
-            province = _strip_suffix(province_match.group(0), _PROVINCE_SUFFIXES)
+        province = _find_known_region_name(text, _KNOWN_PROVINCES)
 
     if city and not province:
         province = _CITY_TO_PROVINCE.get(city, '')
+    if province in _MUNICIPALITIES and not city:
+        city = province
 
-    region_parts = [part for part in (province, city) if part]
+    if province and city and province == city:
+        region_parts = [province]
+    else:
+        region_parts = [part for part in (province, city) if part]
     region_path = '/'.join(region_parts)
     if not region_path:
         region_path = text

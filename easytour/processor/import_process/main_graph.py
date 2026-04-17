@@ -5,6 +5,9 @@ from pathlib import Path
 from typing import Any
 
 from easytour.processor.import_process.config import get_config
+from easytour.processor.import_process.nodes.file_hash_node import FileHashNode
+from easytour.processor.import_process.nodes.doc_level_extract_node import DocLevelExtractNode
+from easytour.processor.import_process.nodes.chunk_level_extract_node import ChunkLevelExtractNode
 from easytour.utils.hashing import build_chunk_hash
 
 
@@ -19,19 +22,31 @@ def create_import_graph() -> _SimpleImportGraph:
 
 def _run_import_pipeline(state: dict[str, Any]) -> dict[str, Any]:
     config = get_config()
+
+    # 节点 1：文件哈希（已由 service 注入时透传，缺失时从文件路径重算）
+    hash_fields = FileHashNode().process(state)
+    state.update(hash_fields)
+
     file_path = str(state.get('import_file_path') or '')
     file_name = Path(file_path).name or str(state.get('file_title') or 'uploaded_file')
     file_stem = Path(file_name).stem or file_name
     content = _read_source_content(file_path, file_stem)
 
     state['file_title'] = str(state.get('file_title') or file_name)
-    state['document_title'] = str(state.get('document_title') or file_stem)
-    state['item_name'] = str(state.get('item_name') or file_stem)
-    state['doc_main_entities'] = list(
-        state.get('doc_main_entities')
-        or [{'item_name': state['item_name'], 'item_type': state.get('doc_content_type') or 'generic', 'aliases': []}]
-    )
+    # 将文件内容写入 md_content，供 DocLevelExtractNode 使用
+    state['md_content'] = state.get('md_content') or content
 
+    # 文档级 LLM 抽取：content_type / 地区 / 主实体
+    doc_fields = DocLevelExtractNode().process(state)
+    state.update(doc_fields)
+
+    # 用抽取结果补全 item_name 和 document_title
+    doc_main_entities = list(state.get('doc_main_entities') or [])
+    primary_entity = doc_main_entities[0] if doc_main_entities else {}
+    state['item_name'] = str(state.get('item_name') or primary_entity.get('item_name') or file_stem)
+    state['document_title'] = str(state.get('document_title') or state['item_name'])
+
+    # 切分文本
     chunks = []
     chunk_size = max(int(config.max_content_length or 1200), 300)
     for index, chunk_text in enumerate(_split_text(content, chunk_size)):
@@ -55,8 +70,13 @@ def _run_import_pipeline(state: dict[str, Any]) -> dict[str, Any]:
         )
 
     state['chunks'] = chunks
+
+    # chunk 级 LLM 抽取：旅游专属结构化字段
+    chunk_fields = ChunkLevelExtractNode().process(state)
+    state.update(chunk_fields)
+
     state['pending_chunks_snapshot'] = list(state.get('pending_chunks_snapshot') or [])
-    state['chunks_snapshot'] = list(state.get('chunks_snapshot') or chunks)
+    state['chunks_snapshot'] = list(state.get('chunks_snapshot') or state.get('chunks') or [])
     return state
 
 
