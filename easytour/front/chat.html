@@ -6,6 +6,7 @@
     <link rel="icon" href="data:,">
     <title>EasyTour 知识查询</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Noto+Sans+SC:wght@400;500;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
     <script>
@@ -196,6 +197,133 @@
             word-break: break-all;
         }
 
+        .answer-markdown {
+            color: #191c1e;
+            word-break: break-word;
+        }
+
+        .answer-markdown > :first-child {
+            margin-top: 0;
+        }
+
+        .answer-markdown > :last-child {
+            margin-bottom: 0;
+        }
+
+        .answer-markdown h1,
+        .answer-markdown h2,
+        .answer-markdown h3,
+        .answer-markdown h4 {
+            margin: 1.1em 0 0.45em;
+            font-family: "Noto Sans SC", sans-serif;
+            font-weight: 800;
+            line-height: 1.4;
+            color: #00236f;
+        }
+
+        .answer-markdown h1 {
+            font-size: 1.45rem;
+        }
+
+        .answer-markdown h2 {
+            font-size: 1.28rem;
+        }
+
+        .answer-markdown h3 {
+            font-size: 1.12rem;
+        }
+
+        .answer-markdown p {
+            margin: 0.65em 0;
+            line-height: 1.9;
+        }
+
+        .answer-markdown ul,
+        .answer-markdown ol {
+            margin: 0.7em 0;
+            padding-left: 1.5em;
+        }
+
+        .answer-markdown li {
+            margin: 0.3em 0;
+            line-height: 1.8;
+        }
+
+        .answer-markdown blockquote {
+            margin: 0.9em 0;
+            padding: 0.2em 1em;
+            border-left: 3px solid #b6c4ff;
+            border-radius: 0 16px 16px 0;
+            background: rgba(220, 225, 255, 0.35);
+            color: #444651;
+        }
+
+        .answer-markdown hr {
+            margin: 1.2em 0;
+            border: 0;
+            border-top: 1px solid rgba(117, 118, 130, 0.18);
+        }
+
+        .answer-markdown code {
+            padding: 0.12em 0.4em;
+            border-radius: 0.45em;
+            background: #eef2ff;
+            color: #1e3a8a;
+            font-size: 0.88em;
+        }
+
+        .answer-markdown pre {
+            margin: 0.85em 0;
+            overflow-x: auto;
+            border-radius: 18px;
+            background: #1e293b;
+            padding: 1rem;
+            color: #e2e8f0;
+        }
+
+        .answer-markdown pre code {
+            padding: 0;
+            background: transparent;
+            color: inherit;
+        }
+
+        .answer-markdown table {
+            width: 100%;
+            margin: 0.85em 0;
+            border-collapse: collapse;
+            overflow: hidden;
+        }
+
+        .answer-markdown th,
+        .answer-markdown td {
+            border: 1px solid rgba(117, 118, 130, 0.16);
+            padding: 0.58em 0.75em;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .answer-markdown th {
+            background: rgba(220, 225, 255, 0.42);
+            color: #00236f;
+            font-weight: 700;
+        }
+
+        .answer-markdown a {
+            color: #1e3a8a;
+            text-decoration: underline;
+            text-decoration-thickness: 1px;
+            text-underline-offset: 2px;
+        }
+
+        .answer-markdown img {
+            display: block;
+            max-width: 100%;
+            margin: 0.9em 0;
+            border-radius: 20px;
+            border: 1px solid rgba(117, 118, 130, 0.16);
+            background: rgba(255, 255, 255, 0.65);
+        }
+
         .switch-button[data-on="true"] {
             background: #00236f;
         }
@@ -338,7 +466,7 @@
 
             <div id="chatThread" class="hide-scrollbar flex flex-1 flex-col gap-6 overflow-y-auto pr-2">
                 <div id="introMessage" class="message-enter flex gap-3">
-                    <div class="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary-container text-sm font-semibold text-white">ET</div>
+                    <img alt="EasyTour Logo" class="mt-1 h-10 w-10 shrink-0 rounded-2xl bg-surface-container-lowest object-contain p-1 shadow-[0_6px_16px_rgba(0,35,111,0.12)]" onerror="this.onerror=null;this.src='/logo.png';" src="/front/logo.png">
                     <div class="max-w-[88%] rounded-[24px] rounded-tl-sm border border-outline-variant/12 bg-surface-container-low p-5">
                         <p class="text-sm leading-7 text-on-surface">
                             我这边已经接上你的知识库接口了。你可以直接问目的地玩法、路线怎么排、预算大概多少，或者继续追问更细的景点信息。
@@ -467,6 +595,7 @@
     const API_BASE = window.location.protocol.startsWith("http")
         ? `${window.location.protocol}//${window.location.host}`
         : "http://127.0.0.1:8000";
+    const BOT_AVATAR_HTML = `<img alt="EasyTour Logo" class="mt-1 h-10 w-10 shrink-0 rounded-2xl bg-surface-container-lowest object-contain p-1 shadow-[0_6px_16px_rgba(0,35,111,0.12)]" onerror="this.onerror=null;this.src='/logo.png';" src="/front/logo.png">`;
 
     const CONTENT_TYPE_LABELS = {
         attraction: "景点",
@@ -501,6 +630,14 @@
 
     let activeRetrievalType = "";
     let isSending = false;
+
+    if (window.marked?.setOptions) {
+        // [修改] 让答案正文按 Markdown 渲染，保留常用 GFM 语法和换行表现。
+        window.marked.setOptions({
+            gfm: true,
+            breaks: true
+        });
+    }
 
     function escapeHtml(value) {
         return String(value || "")
@@ -593,7 +730,7 @@
         const messageId = `bot-${Math.random().toString(36).slice(2)}`;
         const html = `
             <div class="message-enter flex gap-3" id="${messageId}">
-                <div class="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary-container text-sm font-semibold text-white">ET</div>
+                ${BOT_AVATAR_HTML}
                 <div class="max-w-[88%] min-w-0">
                     <div class="rounded-[24px] rounded-tl-sm border border-outline-variant/12 bg-surface-container-low p-4">
                         <div class="answer text-sm leading-7 text-on-surface"></div>
@@ -630,10 +767,16 @@
     }
 
     function openInNewTab(url) {
-        const popup = window.open(url, "_blank", "noopener,noreferrer");
-        if (!popup) {
-            window.location.href = url;
-        }
+        // [修改] 不再用返回值判断新页是否打开成功；部分浏览器在 noopener/noreferrer 下会返回 null，
+        // 但新标签页其实已经打开，旧逻辑会误触发当前页跳转，导致出现两个引用页。
+        const link = document.createElement("a");
+        link.href = url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.style.display = "none";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
     }
 
     function openCitationDocument(citation) {
@@ -707,6 +850,61 @@
         if (lastIndex < raw.length) {
             containerEl.appendChild(document.createTextNode(raw.slice(lastIndex)));
         }
+    }
+
+    function injectCitationPillsIntoTree(rootNode, citations) {
+        const textNodes = [];
+        const walker = document.createTreeWalker(
+            rootNode,
+            NodeFilter.SHOW_TEXT,
+            {
+                acceptNode(node) {
+                    const text = String(node.nodeValue || "");
+                    if (!/\[(\d+)\]/.test(text)) {
+                        return NodeFilter.FILTER_REJECT;
+                    }
+                    const parent = node.parentElement;
+                    if (parent && parent.closest("pre, code")) {
+                        return NodeFilter.FILTER_REJECT;
+                    }
+                    return NodeFilter.FILTER_ACCEPT;
+                }
+            }
+        );
+
+        let currentNode = walker.nextNode();
+        while (currentNode) {
+            textNodes.push(currentNode);
+            currentNode = walker.nextNode();
+        }
+
+        textNodes.forEach((textNode) => {
+            const fragment = document.createDocumentFragment();
+            renderAnswerTextWithCitations(fragment, textNode.nodeValue || "", citations);
+            textNode.parentNode?.replaceChild(fragment, textNode);
+        });
+    }
+
+    function renderAnswerMarkdownWithCitations(containerEl, text, citations) {
+        const raw = String(text || "").trim();
+        containerEl.innerHTML = "";
+        containerEl.className = "answer-markdown text-sm text-on-surface";
+
+        if (!raw) {
+            containerEl.textContent = "这次没有拿到正文内容，可以稍后再试一次。";
+            return;
+        }
+
+        if (!window.marked?.parse) {
+            containerEl.className = "answer-markdown whitespace-pre-wrap text-sm leading-7 text-on-surface";
+            renderAnswerTextWithCitations(containerEl, raw, citations);
+            return;
+        }
+
+        const template = document.createElement("template");
+        template.innerHTML = window.marked.parse(raw);
+        injectCitationPillsIntoTree(template.content, citations);
+        containerEl.appendChild(template.content);
     }
 
     function groupCitationsBySource(citations) {
@@ -790,12 +988,7 @@
         containerEl.textContent = "";
 
         const textEl = document.createElement("div");
-        textEl.className = "answer-text whitespace-pre-wrap text-sm leading-7 text-on-surface";
-        if (text) {
-            renderAnswerTextWithCitations(textEl, text, citations);
-        } else {
-            textEl.textContent = "这次没有拿到正文内容，可以稍后再试一次。";
-        }
+        renderAnswerMarkdownWithCitations(textEl, text, citations);
         containerEl.appendChild(textEl);
 
         if (images.length) {
@@ -1157,7 +1350,7 @@
 
         chatThread.innerHTML = `
             <div id="introMessage" class="message-enter flex gap-3">
-                <div class="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary-container text-sm font-semibold text-white">ET</div>
+                ${BOT_AVATAR_HTML}
                 <div class="max-w-[88%] rounded-[24px] rounded-tl-sm border border-outline-variant/12 bg-surface-container-low p-5">
                     <p class="text-sm leading-7 text-on-surface">会话已经清空了。继续问新的旅行问题就行，我会从一段干净的上下文重新开始。</p>
                 </div>
