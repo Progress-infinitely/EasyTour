@@ -332,6 +332,23 @@
             transform: translateX(20px);
         }
 
+        /* 紧凑型开关：用于放在助手卡片右上角的工具栏里 */
+        .switch-button.switch-compact {
+            height: 1.25rem;
+            width: 2.25rem;
+        }
+
+        .switch-button.switch-compact .switch-knob {
+            height: 1rem;
+            width: 1rem;
+            left: 0.125rem;
+            top: 0.125rem;
+        }
+
+        .switch-button.switch-compact[data-on="true"] .switch-knob {
+            transform: translateX(1rem);
+        }
+
         .brand-logo {
             width: 58px;
             height: 58px;
@@ -414,44 +431,9 @@
 
 <main class="mx-auto mt-6 grid w-full max-w-screen-2xl grid-cols-1 gap-8 pb-10 lg:grid-cols-12">
     <section class="flex min-h-0 flex-col gap-6 lg:col-span-8">
-        <!-- [修改] 首屏搜索区沿用你给的结构，但筛选改成和当前后端真实能力一致 -->
-        <div class="ambient-shadow relative overflow-hidden rounded-[28px] border border-outline-variant/15 bg-surface-container-lowest p-6 md:p-7">
-            <div class="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-primary/5 blur-3xl"></div>
-            <div class="absolute bottom-0 left-0 h-28 w-28 rounded-full bg-primary-fixed/70 blur-3xl"></div>
-
-            <div class="relative z-10">
-                <p class="font-label text-xs font-semibold uppercase tracking-[0.28em] text-secondary">Knowledge Search</p>
-                <h1 class="mt-2 font-headline text-3xl font-bold tracking-tight text-primary">知识查询</h1>
-                <p class="mt-3 max-w-2xl text-sm leading-6 text-secondary">
-                    你可以直接问目的地玩法、行程规划、景点信息、住宿建议。页面会把现有知识库里的内容组织成更像“旅行顾问”而不是“技术 demo”的体验。
-                </p>
-
-                <div class="mt-6 flex flex-col gap-3 md:flex-row">
-                    <div class="relative flex-1">
-                        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-secondary">search</span>
-                        <input id="heroInput" class="w-full rounded-full border-0 bg-surface-container-low py-3.5 pl-12 pr-4 text-sm text-on-surface transition-colors placeholder:text-secondary/70 focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary" placeholder="例如：京都秋季赏枫五日游，包含景点顺序和预算..." type="text">
-                    </div>
-                    <button id="heroSearchBtn" class="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary to-primary-container px-8 py-3 font-medium text-white shadow-[0_10px_24px_rgba(0,35,111,0.18)] transition-all hover:shadow-[0_14px_32px_rgba(0,35,111,0.22)]" type="button">
-                        <span class="material-symbols-outlined">auto_awesome</span>
-                        智能检索
-                    </button>
-                </div>
-
-                <div class="mt-5 flex flex-wrap gap-2">
-                    <span class="mr-1 self-center text-xs font-medium uppercase tracking-[0.2em] text-secondary">快捷筛选</span>
-                    <button class="type-chip rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-white shadow-[0_4px_12px_rgba(0,35,111,0.18)] transition-all" data-type-chip="attraction" type="button">景点</button>
-                    <button class="type-chip rounded-full bg-secondary-container px-3 py-1.5 text-xs font-medium text-secondary transition-colors hover:bg-primary-fixed hover:text-primary" data-type-chip="route" type="button">路线</button>
-                    <button class="type-chip rounded-full bg-secondary-container px-3 py-1.5 text-xs font-medium text-secondary transition-colors hover:bg-primary-fixed hover:text-primary" data-type-chip="hotel" type="button">酒店</button>
-                    <button class="type-chip rounded-full bg-secondary-container px-3 py-1.5 text-xs font-medium text-secondary transition-colors hover:bg-primary-fixed hover:text-primary" data-type-chip="food" type="button">美食</button>
-                    <button class="type-chip rounded-full bg-secondary-container px-3 py-1.5 text-xs font-medium text-secondary transition-colors hover:bg-primary-fixed hover:text-primary" data-type-chip="transport" type="button">交通</button>
-                    <button class="type-chip rounded-full bg-secondary-container px-3 py-1.5 text-xs font-medium text-secondary transition-colors hover:bg-primary-fixed hover:text-primary" data-type-chip="culture" type="button">文化</button>
-                </div>
-            </div>
-        </div>
-
         <!-- [修改] 这里不再是“赛博聊天框”，而是更清楚的旅行顾问对话区 -->
-        <div class="ambient-shadow flex min-h-[520px] flex-1 flex-col rounded-[28px] border border-outline-variant/15 bg-surface-container-lowest p-6">
-            <div class="mb-4 flex items-center justify-between border-b border-outline-variant/15 pb-4">
+        <div class="ambient-shadow flex min-h-[640px] flex-1 flex-col rounded-[28px] border border-outline-variant/15 bg-surface-container-lowest p-6">
+            <div class="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/15 pb-4">
                 <div class="flex items-center gap-3">
                     <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary-container text-white">
                         <span class="material-symbols-outlined text-lg">forum</span>
@@ -461,7 +443,27 @@
                         <p id="scopeHint" class="text-xs text-secondary">默认全库检索，未限制地区</p>
                     </div>
                 </div>
-                <div class="rounded-full bg-surface-container-low px-3 py-1 text-xs font-label text-secondary" id="sessionBadge">会话准备中</div>
+                <!-- [修改] 原会话 ID 徽章所在的位置改造成工具栏：地区过滤 + 流式开关 + 清空会话 -->
+                <div class="flex items-center gap-2">
+                    <div class="relative">
+                        <span class="material-symbols-outlined pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-base text-secondary">public</span>
+                        <select id="filterRegion" class="appearance-none rounded-full bg-surface-container-low py-1.5 pl-8 pr-7 text-xs font-label text-on-surface transition-colors focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary" aria-label="地区过滤">
+                            <option value="">全部地区</option>
+                        </select>
+                        <span class="material-symbols-outlined pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-base text-secondary">expand_more</span>
+                    </div>
+
+                    <div class="flex items-center gap-2 rounded-full bg-surface-container-low px-3 py-1">
+                        <span class="text-xs font-label text-secondary">流式</span>
+                        <button id="streamToggle" class="switch-button switch-compact relative rounded-full bg-primary transition-colors" data-on="true" type="button" aria-label="切换流式回答">
+                            <span class="switch-knob absolute rounded-full bg-white shadow-sm transition-transform"></span>
+                        </button>
+                    </div>
+
+                    <button id="clearHistoryBtn" class="flex h-8 w-8 items-center justify-center rounded-full bg-surface-container-low text-secondary transition-colors hover:bg-error-container hover:text-error" type="button" title="清空当前会话" aria-label="清空当前会话">
+                        <span class="material-symbols-outlined text-base">delete_sweep</span>
+                    </button>
+                </div>
             </div>
 
             <div id="chatThread" class="hide-scrollbar flex flex-1 flex-col gap-6 overflow-y-auto pr-2">
@@ -495,38 +497,38 @@
     </section>
 
     <aside class="flex min-h-0 flex-col gap-6 lg:col-span-4">
-        <div class="ambient-shadow rounded-[28px] border border-outline-variant/15 bg-surface-container-lowest p-6">
-            <div class="flex items-center justify-between">
-                <h3 class="font-headline text-lg font-bold text-primary">检索设置</h3>
-                <span class="material-symbols-outlined text-primary">tune</span>
-            </div>
+        <!-- [修改] 首屏搜索区从左侧搬到右侧，替代原来的“检索设置”卡片 -->
+        <div class="ambient-shadow relative overflow-hidden rounded-[28px] border border-outline-variant/15 bg-surface-container-lowest p-6">
+            <div class="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-primary/5 blur-3xl"></div>
+            <div class="absolute bottom-0 left-0 h-28 w-28 rounded-full bg-primary-fixed/70 blur-3xl"></div>
 
-            <div class="mt-5 space-y-4">
-                <label class="block space-y-2">
-                    <span class="text-xs font-label font-medium uppercase tracking-[0.22em] text-secondary">Region / 地区过滤</span>
-                    <select id="filterRegion" class="w-full rounded-[20px] border-0 bg-surface-container-low px-4 py-3 text-sm text-on-surface focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary">
-                        <option value="">全部地区</option>
-                    </select>
-                </label>
+            <div class="relative z-10">
+                <p class="font-label text-xs font-semibold uppercase tracking-[0.28em] text-secondary">Knowledge Search</p>
+                <h1 class="mt-2 font-headline text-2xl font-bold tracking-tight text-primary">知识查询</h1>
+                <p class="mt-3 text-sm leading-6 text-secondary">
+                    你可以直接问目的地玩法、行程规划、景点信息、住宿建议。页面会把现有知识库里的内容组织成更像“旅行顾问”而不是“技术 demo”的体验。
+                </p>
 
-                <div class="rounded-[24px] bg-surface-container-low p-4">
-                    <div class="flex items-center justify-between gap-4">
-                        <div>
-                            <div class="text-sm font-medium text-on-surface">流式回答</div>
-                            <p class="mt-1 text-xs leading-5 text-secondary">开启后会边生成边显示，更像真实对话。</p>
-                        </div>
-                        <button id="streamToggle" class="switch-button relative h-7 w-12 rounded-full bg-primary transition-colors" data-on="true" type="button" aria-label="切换流式回答">
-                            <span class="switch-knob absolute left-1 top-1 h-5 w-5 rounded-full bg-white shadow-sm transition-transform"></span>
-                        </button>
+                <div class="mt-5 flex flex-col gap-3">
+                    <div class="relative">
+                        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-secondary">search</span>
+                        <input id="heroInput" class="w-full rounded-full border-0 bg-surface-container-low py-3 pl-12 pr-4 text-sm text-on-surface transition-colors placeholder:text-secondary/70 focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary" placeholder="例如：京都秋季赏枫五日游..." type="text">
                     </div>
+                    <button id="heroSearchBtn" class="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary to-primary-container px-6 py-2.5 text-sm font-medium text-white shadow-[0_10px_24px_rgba(0,35,111,0.18)] transition-all hover:shadow-[0_14px_32px_rgba(0,35,111,0.22)]" type="button">
+                        <span class="material-symbols-outlined text-base">auto_awesome</span>
+                        智能检索
+                    </button>
                 </div>
 
-                <div class="rounded-[24px] bg-surface-container-low p-4 text-sm">
-                    <div class="text-xs font-label font-medium uppercase tracking-[0.18em] text-secondary">Current Scope</div>
-                    <p id="scopeSummary" class="mt-2 leading-6 text-on-surface">当前是全库检索，不限制内容类型，也不限制地区。</p>
+                <div class="mt-5 flex flex-wrap gap-2">
+                    <span class="mr-1 self-center text-[11px] font-medium uppercase tracking-[0.2em] text-secondary">快捷筛选</span>
+                    <button class="type-chip rounded-full bg-primary px-3 py-1 text-xs font-medium text-white shadow-[0_4px_12px_rgba(0,35,111,0.18)] transition-all" data-type-chip="attraction" type="button">景点</button>
+                    <button class="type-chip rounded-full bg-secondary-container px-3 py-1 text-xs font-medium text-secondary transition-colors hover:bg-primary-fixed hover:text-primary" data-type-chip="route" type="button">路线</button>
+                    <button class="type-chip rounded-full bg-secondary-container px-3 py-1 text-xs font-medium text-secondary transition-colors hover:bg-primary-fixed hover:text-primary" data-type-chip="hotel" type="button">酒店</button>
+                    <button class="type-chip rounded-full bg-secondary-container px-3 py-1 text-xs font-medium text-secondary transition-colors hover:bg-primary-fixed hover:text-primary" data-type-chip="food" type="button">美食</button>
+                    <button class="type-chip rounded-full bg-secondary-container px-3 py-1 text-xs font-medium text-secondary transition-colors hover:bg-primary-fixed hover:text-primary" data-type-chip="transport" type="button">交通</button>
+                    <button class="type-chip rounded-full bg-secondary-container px-3 py-1 text-xs font-medium text-secondary transition-colors hover:bg-primary-fixed hover:text-primary" data-type-chip="culture" type="button">文化</button>
                 </div>
-
-                <button id="clearHistoryBtn" class="w-full rounded-[20px] bg-primary-fixed px-4 py-3 text-sm font-medium text-primary transition-colors hover:bg-primary-fixed-dim" type="button">清空当前会话</button>
             </div>
         </div>
 
@@ -613,9 +615,7 @@
     const sendBtn = document.getElementById("sendBtn");
     const filterRegion = document.getElementById("filterRegion");
     const scopeHint = document.getElementById("scopeHint");
-    const scopeSummary = document.getElementById("scopeSummary");
     const streamToggle = document.getElementById("streamToggle");
-    const sessionBadge = document.getElementById("sessionBadge");
     const clearHistoryBtn = document.getElementById("clearHistoryBtn");
     const typeChipButtons = Array.from(document.querySelectorAll("[data-type-chip]"));
     const suggestionButtons = Array.from(document.querySelectorAll("[data-suggestion-query]"));
@@ -673,10 +673,6 @@
     function removeIntroIfNeeded() {
         const currentIntro = document.getElementById("introMessage");
         if (currentIntro) currentIntro.remove();
-    }
-
-    function updateSessionBadge() {
-        sessionBadge.textContent = `会话 ${sessionId.slice(-6)}`;
     }
 
     function setStreamEnabled(enabled) {
@@ -790,24 +786,12 @@
 
     function updateScopeHint() {
         const selectedRegionLabel = getSelectedRegionLabel();
-        const manualRegionText = selectedRegionLabel ? `地区：${selectedRegionLabel}` : "地区：不限";
-        const manualTypeText = activeRetrievalType ? `类型：${formatRetrievalTypeLabel(activeRetrievalType)}` : "类型：不限";
         const effectiveRegionLabel = lastEffectiveScope ? getEffectiveRegionLabel(lastEffectiveScope.region) : "";
         const displayedRegionLabel = effectiveRegionLabel || selectedRegionLabel;
         const displayedRetrievalType = String(lastEffectiveScope?.retrievalType || "").trim() || activeRetrievalType;
         const regionText = displayedRegionLabel ? `地区：${displayedRegionLabel}` : "地区：不限";
         const typeText = displayedRetrievalType ? `类型：${formatRetrievalTypeLabel(displayedRetrievalType)}` : "类型：不限";
-        const streamText = isStreamEnabled() ? "回答方式：流式" : "回答方式：一次性";
         scopeHint.textContent = `${lastEffectiveScope ? "当前生效" : "当前筛选"} · ${typeText} · ${regionText}`;
-
-        let summary = `当前手动筛选是 ${manualTypeText}，${manualRegionText}，${streamText}。`;
-        if (lastEffectiveScope) {
-            const effectiveTypeText = `类型：${formatRetrievalTypeLabel(lastEffectiveScope.retrievalType)}`;
-            const effectiveRegionLabel = getEffectiveRegionLabel(lastEffectiveScope.region);
-            const effectiveRegionText = effectiveRegionLabel ? `地区：${effectiveRegionLabel}` : "地区：不限";
-            summary += ` 最近一次后端识别并实际生效的是 ${effectiveTypeText}，${effectiveRegionText}。`;
-        }
-        scopeSummary.textContent = summary;
     }
 
     function setActiveRetrievalType(nextType) {
@@ -1475,7 +1459,6 @@
         scrollToBottom();
     });
 
-    updateSessionBadge();
     updateTypeChipStyles();
     setStreamEnabled(true);
     loadRegions();
