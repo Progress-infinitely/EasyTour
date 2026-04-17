@@ -15,46 +15,45 @@
                 extend: {
                     colors: {
                         "on-error-container": "#93000a",
-                        "outline-variant": "#c5c5d3",
-                        "surface-container-low": "#f3f4f6",
-                        "inverse-on-surface": "#f0f1f3",
-                        "error": "#ba1a1a",
-                        "on-secondary": "#ffffff",
-                        "surface-container-high": "#e7e8ea",
+                        "outline-variant": "#d7deeb",
+                        "surface-container-low": "#f3f6fc",
+                        "surface-container-high": "#eaf0fb",
                         "surface-container-lowest": "#ffffff",
-                        "on-primary-container": "#90a8ff",
-                        "surface-tint": "#4059aa",
-                        "surface-container-highest": "#e1e2e4",
-                        "on-surface-variant": "#444651",
-                        "surface-container": "#edeef0",
-                        "secondary": "#585f6a",
-                        "secondary-container": "#dce3f0",
+                        "surface-container": "#eef3fb",
+                        "secondary": "#5e6f90",
+                        "secondary-container": "#dfe8f8",
                         "primary-container": "#1e3a8a",
-                        "surface-dim": "#d9dadc",
-                        "on-primary": "#ffffff",
-                        "background": "#f8f9fb",
-                        "surface-bright": "#f8f9fb",
-                        "surface": "#f8f9fb",
-                        "primary-fixed": "#dce1ff",
-                        "primary-fixed-dim": "#b6c4ff",
-                        "primary": "#00236f",
-                        "on-surface": "#191c1e",
-                        "error-container": "#ffdad6",
-                        "on-background": "#191c1e",
-                        "outline": "#757682",
-                        "success-surface": "#dbfce7",
-                        "success-text": "#166534",
-                        "warning-surface": "#fff4cf",
-                        "warning-text": "#9a6700"
+                        "background": "#f4f7fc",
+                        "surface": "#f4f7fc",
+                        "primary-fixed": "#dfe9ff",
+                        "primary-fixed-dim": "#bdd0ff",
+                        "primary": "#1c3f95",
+                        "on-surface": "#12213f",
+                        "on-surface-variant": "#536582",
+                        "error-container": "#ffdfdf",
+                        "outline": "#8190ab",
+                        "success-surface": "#dbf4ea",
+                        "success-text": "#168466",
+                        "warning-surface": "#fff0d9",
+                        "warning-text": "#9c5a08",
+                        "danger-surface": "#fde5e5",
+                        "danger-text": "#cf4747",
+                        "accent": "#ff8a1c",
+                        "accent-soft": "#ffead5"
                     },
                     borderRadius: {
-                        "xl": "0.75rem",
-                        "2xl": "1.5rem"
+                        "xl": "0.9rem",
+                        "2xl": "1.4rem",
+                        "3xl": "1.9rem"
                     },
                     fontFamily: {
                         "headline": ["Manrope", "sans-serif"],
                         "body": ["Noto Sans SC", "sans-serif"],
                         "label": ["Inter", "sans-serif"]
+                    },
+                    boxShadow: {
+                        "panel": "0 8px 30px rgba(15, 30, 60, 0.08)",
+                        "soft": "0 2px 10px rgba(15, 30, 60, 0.05)"
                     }
                 }
             }
@@ -64,9 +63,9 @@
         body {
             font-family: "Noto Sans SC", sans-serif;
             background:
-                radial-gradient(circle at top left, rgba(182, 196, 255, 0.35), transparent 34%),
-                radial-gradient(circle at bottom right, rgba(30, 58, 138, 0.08), transparent 30%),
-                #f8f9fb;
+                radial-gradient(circle at top left, rgba(197, 210, 255, 0.55), transparent 34%),
+                radial-gradient(circle at top right, rgba(255, 255, 255, 0.95), transparent 24%),
+                #f4f7fc;
         }
 
         .font-headline {
@@ -77,30 +76,246 @@
             font-family: "Inter", sans-serif;
         }
 
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.82);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+        .brand-logo {
+            width: 58px;
+            height: 58px;
+            object-fit: contain;
+            display: block;
+            flex-shrink: 0;
+            filter: drop-shadow(0 8px 18px rgba(28, 63, 149, 0.18));
+        }
+
+        .top-switch {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.38rem;
+            border-radius: 999px;
+            border: 1px solid rgba(199, 209, 233, 0.7);
+            background: rgba(255, 255, 255, 0.52);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.92),
+                0 14px 30px rgba(25, 28, 30, 0.05);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+
+        .top-switch-tab {
+            min-width: 88px;
+            height: 44px;
+            padding: 0 1.4rem;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #687896;
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            transition: all 0.18s ease;
+        }
+
+        .top-switch-tab:hover {
+            color: #1c3f95;
+            background: rgba(220, 229, 249, 0.72);
+        }
+
+        .top-switch-tab.active {
+            color: #1c3f95;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(240, 245, 254, 0.92));
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.98),
+                0 8px 18px rgba(28, 63, 149, 0.14);
+        }
+
+        .hero-copy-title {
+            font-size: clamp(2.45rem, 4.15vw, 4rem);
+            font-weight: 800;
+            line-height: 1.08;
+            letter-spacing: -0.05em;
+            color: #12213f;
+        }
+
+        .hero-copy-accent {
+            color: #2e6be0;
+        }
+
+        .hero-copy-desc {
+            max-width: 780px;
+            font-size: clamp(1.02rem, 1.3vw, 1.35rem);
+            line-height: 1.9;
+            color: #5e6f90;
+            letter-spacing: -0.01em;
+        }
+
+        .hero-stats-grid {
+            align-self: center;
+        }
+
+        .hero-stat-card {
+            min-height: 162px;
+            padding: 1.8rem 1.75rem;
+        }
+
+        .hero-stat-value {
+            font-size: clamp(2.6rem, 2.8vw, 3rem);
+            line-height: 1;
         }
 
         .ambient-shadow {
-            box-shadow: 0 20px 40px rgba(25, 28, 30, 0.06);
+            box-shadow: 0 12px 34px rgba(15, 30, 60, 0.07);
         }
 
-        .upload-glow::before {
+        .stat-card {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::after {
             content: "";
             position: absolute;
-            inset: -1px;
-            border-radius: inherit;
-            background: linear-gradient(135deg, rgba(0, 35, 111, 0.14), rgba(182, 196, 255, 0.24));
-            opacity: 0;
-            transition: opacity 0.25s ease;
-            z-index: 0;
+            inset: 0;
+            background: linear-gradient(135deg, transparent 60%, rgba(189, 208, 255, 0.18));
+            pointer-events: none;
         }
 
-        .upload-glow:hover::before,
-        .upload-glow.is-dragover::before {
-            opacity: 1;
+        .upload-sheen::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at top center, rgba(223, 233, 255, 0.8), transparent 44%);
+            pointer-events: none;
+        }
+
+        .upload-sheen.is-dragover {
+            border-color: #6b8fe9;
+            background: linear-gradient(180deg, rgba(240, 245, 254, 0.98), rgba(255, 255, 255, 0.98));
+            box-shadow: 0 14px 34px rgba(34, 86, 196, 0.1);
+        }
+
+        .task-segment {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            border-radius: 999px;
+            padding: 0.65rem 0.95rem;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #4d5f7c;
+            background: #f4f7fc;
+            transition: all 0.18s ease;
+        }
+
+        .task-segment:hover {
+            color: #1c3f95;
+            background: #edf3ff;
+        }
+
+        .task-segment.active {
+            color: #1c3f95;
+            background: #dfe9ff;
+            box-shadow: inset 0 0 0 1px rgba(28, 63, 149, 0.08);
+        }
+
+        .meta-type-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border-radius: 999px;
+            padding: 0.72rem 1rem;
+            border: 1px solid #e0e7f4;
+            background: #ffffff;
+            color: #415271;
+            font-size: 0.82rem;
+            font-weight: 600;
+            transition: all 0.16s ease;
+        }
+
+        .meta-type-chip:hover {
+            border-color: #7ea0f1;
+            color: #1c3f95;
+        }
+
+        .meta-type-chip.active {
+            background: #ff8a1c;
+            color: #ffffff;
+            border-color: #ff8a1c;
+            box-shadow: 0 10px 24px rgba(255, 138, 28, 0.22);
+        }
+
+        .meta-type-chip .chip-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 999px;
+            background: currentColor;
+            opacity: 0.75;
+        }
+
+        .task-table-head,
+        .task-table-row {
+            display: grid;
+            grid-template-columns: 2.2fr 0.95fr 1.1fr 1fr 0.85fr;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .task-table-head {
+            padding: 0.95rem 1.35rem;
+            background: #f4f7fc;
+            color: #657793;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .task-table-row {
+            padding: 1.15rem 1.35rem;
+            border-top: 1px solid #edf2fa;
+            transition: background 0.16s ease;
+        }
+
+        .task-table-row:hover {
+            background: rgba(244, 247, 252, 0.75);
+        }
+
+        .file-pill {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.78rem;
+            font-weight: 800;
+            letter-spacing: 0.03em;
+            flex-shrink: 0;
+        }
+
+        .progress-track {
+            height: 8px;
+            border-radius: 999px;
+            background: #e3eaf6;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 999px;
+            transition: width 0.35s ease;
+        }
+
+        .progress-fill.running {
+            background: linear-gradient(90deg, #2e6be0, #5b8ef0);
+        }
+
+        .progress-fill.done {
+            background: linear-gradient(90deg, #16a07c, #29bf95);
+        }
+
+        .progress-fill.fail {
+            background: linear-gradient(90deg, #e04a4a, #f27070);
         }
 
         .task-log::-webkit-scrollbar {
@@ -108,180 +323,191 @@
         }
 
         .task-log::-webkit-scrollbar-thumb {
-            background: rgba(117, 118, 130, 0.3);
+            background: rgba(129, 144, 171, 0.35);
             border-radius: 999px;
         }
 
-        .task-enter {
-            animation: taskEnter 0.3s ease;
-        }
-
-        @keyframes taskEnter {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
+        @media (max-width: 1100px) {
+            .task-table-head {
+                display: none;
             }
-            to {
-                opacity: 1;
-                transform: translateY(0);
+
+            .task-table-row {
+                grid-template-columns: 1fr;
+                gap: 0.9rem;
             }
         }
     </style>
 </head>
-<body class="min-h-screen bg-background text-on-background pb-24">
-<!-- [修改] 顶部导航换成旅游知识库风格，并接入真实页面跳转 -->
-<header class="sticky top-0 z-50 mx-auto flex w-full max-w-screen-2xl items-center justify-between border-b border-outline-variant/15 bg-surface-container-lowest/80 px-6 py-3 text-primary shadow-[0_20px_40px_rgba(25,28,30,0.06)] backdrop-blur-md">
+<body class="min-h-screen bg-background px-4 pb-24 pt-4 text-on-surface md:px-8 md:pb-0 md:pt-6 xl:px-10">
+<!-- [修改] 导入页外层壳子和查询页彻底对齐：同一套圆角顶栏、同一套页面边距。 -->
+<header class="sticky top-4 z-50 mx-auto hidden w-full max-w-screen-2xl items-center justify-between rounded-[28px] border border-outline-variant/15 bg-surface-container-lowest/88 px-7 py-4 text-primary shadow-[0_20px_40px_rgba(25,28,30,0.06)] backdrop-blur-md md:flex md:top-6">
     <a class="flex items-center gap-3" href="/import">
-        <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary-container text-sm font-bold text-white shadow-[0_10px_24px_rgba(0,35,111,0.18)]">ET</div>
+        <img alt="EasyTour Logo" class="brand-logo" onerror="this.onerror=null;this.src='/logo.png';" src="/front/logo.png">
         <div>
-            <div class="font-headline text-lg font-extrabold tracking-tight text-primary">EasyTour</div>
-            <div class="text-xs text-secondary">Travel Knowledge Studio</div>
+            <div class="font-headline text-[1.55rem] font-extrabold tracking-tight text-primary leading-none">EasyTour</div>
+            <div class="mt-1 text-[0.92rem] text-secondary">Your personal guide</div>
         </div>
     </a>
 
-    <nav class="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-8 md:flex">
-        <a class="border-b-2 border-primary pb-1 text-sm font-semibold text-primary" href="/import">导入</a>
-        <a class="border-b-2 border-transparent pb-1 text-sm font-medium text-secondary transition-colors hover:text-primary" href="/chat.html">查询</a>
+    <nav class="top-switch font-title" aria-label="页面切换">
+        <a aria-current="page" class="top-switch-tab active" href="/import">导入</a>
+        <a class="top-switch-tab" href="/chat.html">查询</a>
     </nav>
 
     <div class="flex items-center gap-4">
-        <div class="hidden text-right md:block">
-            <div class="text-sm font-medium text-primary">内容入库</div>
-            <div class="text-xs text-secondary">当前后端支持 PDF / MD</div>
+        <div class="hidden text-right lg:block">
+            <div class="text-sm font-semibold text-primary">内容入库</div>
+            <div class="text-xs text-secondary">当前可处理：PDF / MD</div>
         </div>
-        <div class="flex h-10 w-10 items-center justify-center rounded-full bg-primary-fixed text-primary shadow-sm">
-            <span class="material-symbols-outlined">luggage</span>
+        <div class="flex h-10 w-10 items-center justify-center rounded-full bg-primary-fixed text-primary">
+            <span class="material-symbols-outlined">cloud_upload</span>
         </div>
     </div>
 </header>
 
-<main class="mx-auto max-w-screen-xl px-4 py-12 md:px-8">
-    <section class="mb-12 max-w-3xl">
-        <p class="mb-3 font-label text-xs font-semibold uppercase tracking-[0.28em] text-secondary">EasyTour Ingestion</p>
-        <h1 class="font-headline text-3xl font-bold tracking-tight text-primary md:text-4xl">把旅游资料导进知识库，后面的查询页才会真有料</h1>
-        <p class="mt-4 text-base leading-7 text-on-surface-variant">
-            这里保留了原来页面的上传、进度轮询和重复导入判断，只是把视觉从“科技实验室”换成了更适合旅行规划产品的版本。
-        </p>
+<!-- [修改] 只重做导入页内容区，页面框架和导航保持不变 -->
+<main class="mx-auto mt-6 w-full max-w-screen-2xl pb-10">
+    <section class="grid gap-8 xl:grid-cols-[1.28fr_1fr] xl:items-center">
+        <div class="pt-4 xl:pt-5">
+            <!-- [修改] 顶部文案区直接按用户给的视觉稿实现，不再使用之前的大段说明文案。 -->
+            <h1 class="font-headline hero-copy-title">
+                让知识库<span class="hero-copy-accent">有备而来</span>
+            </h1>
+            <p class="hero-copy-desc mt-5">
+                上传景区资料、线路、酒店、美食与交通指南。系统会完成解析、切片、向量化，并实时追踪每一条任务的进度。
+            </p>
+        </div>
+
+        <div class="hero-stats-grid grid gap-5 sm:grid-cols-3">
+            <div class="hero-stat-card stat-card ambient-shadow rounded-[28px] border border-outline-variant/15 bg-surface-container-lowest">
+                <div class="text-xs font-label font-semibold uppercase tracking-[0.16em] text-secondary">本地任务</div>
+                <div class="hero-stat-value mt-5 font-extrabold text-on-surface" id="heroTaskCount">0</div>
+                <div class="mt-3 text-sm font-medium text-success-text" id="heroTaskMeta">等待导入</div>
+            </div>
+            <div class="hero-stat-card stat-card ambient-shadow rounded-[28px] border border-outline-variant/15 bg-surface-container-lowest">
+                <div class="text-xs font-label font-semibold uppercase tracking-[0.16em] text-secondary">成功导入率</div>
+                <div class="hero-stat-value mt-5 font-extrabold text-on-surface" id="heroSuccessRate">0%</div>
+                <div class="mt-3 text-sm font-medium text-success-text" id="heroSuccessMeta">已完成 0 / 0</div>
+            </div>
+            <div class="hero-stat-card stat-card ambient-shadow rounded-[28px] border border-outline-variant/15 bg-surface-container-lowest">
+                <div class="text-xs font-label font-semibold uppercase tracking-[0.16em] text-secondary">进行中任务</div>
+                <div class="hero-stat-value mt-5 font-extrabold text-on-surface" id="heroRunningCount">0</div>
+                <div class="mt-3 text-sm font-medium text-secondary" id="heroRunningMeta">暂无后台处理</div>
+            </div>
+        </div>
     </section>
 
-    <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
-        <section class="space-y-8 lg:col-span-2">
-            <!-- [修改] 上传区域换成新视觉，但仍然绑定原来的文件选择和拖拽上传 -->
-            <div id="dropZone" class="upload-glow ambient-shadow group relative overflow-hidden rounded-[28px] border border-outline-variant/20 bg-surface-container-lowest p-8 text-center transition-all duration-300 hover:bg-surface-container-low sm:p-10">
-                <div class="absolute -right-12 -top-10 h-40 w-40 rounded-full bg-primary-fixed blur-3xl opacity-70"></div>
-                <div class="absolute -bottom-16 left-0 h-32 w-32 rounded-full bg-primary/10 blur-3xl"></div>
-                <input id="fileInput" class="hidden" type="file" accept=".pdf,.md" multiple>
-
-                <div class="relative z-10 mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-primary-fixed text-primary shadow-[0_16px_32px_rgba(0,35,111,0.08)] transition-transform duration-300 group-hover:scale-110">
-                    <span class="material-symbols-outlined text-4xl">cloud_upload</span>
+    <section class="mt-8 grid gap-5 xl:grid-cols-[1.9fr_0.76fr]">
+        <div id="dropZone" class="upload-sheen ambient-shadow relative overflow-hidden rounded-[30px] border border-outline-variant/15 bg-surface-container-lowest px-6 py-12 text-center sm:px-10 sm:py-16">
+            <input id="fileInput" class="hidden" type="file" accept=".pdf,.md" multiple>
+            <div class="relative z-10">
+                <div class="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-primary-fixed text-primary shadow-[0_18px_32px_rgba(28,63,149,0.08)]">
+                    <span class="material-symbols-outlined text-5xl">cloud_upload</span>
                 </div>
-                <h2 class="relative z-10 mt-6 text-2xl font-semibold text-on-surface">拖拽文件到这里，或者直接点一下上传</h2>
-                <p class="relative z-10 mx-auto mt-3 max-w-xl text-sm leading-6 text-secondary">
-                    当前这套后端实际支持 <strong>PDF</strong> 和 <strong>MD</strong>。多文件会自动排队导入，右侧能看到最近 5 条任务状态。
+                <h2 class="mt-9 text-3xl font-bold tracking-tight text-on-surface">拖拽文件到这里，或者直接点一下上传</h2>
+                <p class="mx-auto mt-4 max-w-3xl text-base leading-8 text-secondary">
+                    文件推荐：<strong>旅游 PDF</strong>、<strong>Markdown</strong>。当前后端真实支持 <strong>PDF / MD</strong>，单文件建议控制在 <strong>50MB</strong> 内。
                 </p>
-                <div class="relative z-10 mt-6 flex flex-wrap items-center justify-center gap-3">
-                    <button id="pickFileBtn" class="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-primary-container px-6 py-3 text-sm font-medium text-white shadow-[0_10px_24px_rgba(0,35,111,0.18)] transition-all hover:shadow-[0_14px_32px_rgba(0,35,111,0.22)]" type="button">
-                        <span class="material-symbols-outlined text-base">attach_file</span>
-                        选择文件
+                <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
+                    <button id="pickFileBtn" class="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-primary-container px-7 py-3 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(28,63,149,0.2)] transition-all hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgba(28,63,149,0.24)]" type="button">
+                        <span class="material-symbols-outlined text-base">cloud_upload</span>
+                        上传文件
                     </button>
-                    <span id="selectedHint" class="rounded-full bg-surface-container-low px-4 py-2 text-xs font-label text-secondary">支持多选 · 刷新后保留本地任务记录</span>
+                    <span id="selectedHint" class="rounded-full border border-outline-variant/20 bg-surface px-4 py-2 text-xs font-label text-secondary">支持多选，上传后自动开始导入</span>
+                </div>
+            </div>
+        </div>
+
+        <aside class="ambient-shadow rounded-[30px] border border-outline-variant/15 bg-surface-container-lowest px-6 py-6">
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold tracking-tight text-primary">导入任务</h2>
+                    <p class="mt-2 text-sm leading-6 text-secondary">右侧只看摘要，下面的大表会展示完整进度和元数据。</p>
                 </div>
             </div>
 
-            <!-- [修改] 表单字段重新整理成旅游项目语义，并保留原 override 能力 -->
-            <div class="ambient-shadow rounded-[28px] bg-surface-container-lowest p-8">
-                <div class="flex flex-wrap items-center justify-between gap-4">
-                    <div>
-                        <h2 class="flex items-center gap-2 text-xl font-semibold text-primary">
-                            <span class="material-symbols-outlined">label</span>
-                            预设元数据
-                        </h2>
-                        <p class="mt-2 text-sm leading-6 text-on-surface-variant">这些字段会随着本次上传一起传给后端，方便后续按景区、地区和来源检索。</p>
-                    </div>
-                    <div class="rounded-full bg-primary-fixed px-4 py-2 text-xs font-label text-primary">表单可选，不填也能上传</div>
-                </div>
-
-                <div class="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
-                    <label class="space-y-2">
-                        <span class="block text-xs font-label font-medium uppercase tracking-[0.22em] text-secondary">Scenic Spot / 景区名称</span>
-                        <input id="ov_document_title" class="w-full rounded-2xl border-0 bg-surface-container-low px-4 py-3 text-sm text-on-surface transition-colors focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary" placeholder="例如：黄山风景区导览手册">
-                    </label>
-
-                    <label class="space-y-2">
-                        <span class="block text-xs font-label font-medium uppercase tracking-[0.22em] text-secondary">Region / 地理位置</span>
-                        <input id="ov_region" class="w-full rounded-2xl border-0 bg-surface-container-low px-4 py-3 text-sm text-on-surface transition-colors focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary" placeholder="例如：安徽/黄山">
-                    </label>
-
-                    <label class="space-y-2 md:col-span-2">
-                        <span class="block text-xs font-label font-medium uppercase tracking-[0.22em] text-secondary">Source Label / 数据来源</span>
-                        <input id="ov_source_label_display" class="w-full rounded-2xl border-0 bg-surface-container-low px-4 py-3 text-sm text-on-surface transition-colors focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary" placeholder="例如：黄山市文旅局官方指南 2024">
-                    </label>
-
-                    <label class="space-y-2">
-                        <span class="block text-xs font-label font-medium uppercase tracking-[0.22em] text-secondary">Content Type / 内容类型</span>
-                        <select id="ov_content_type" class="w-full rounded-2xl border-0 bg-surface-container-low px-4 py-3 text-sm text-on-surface transition-colors focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary">
-                            <option value="">自动识别</option>
-                        </select>
-                    </label>
-                </div>
-
-                <details class="mt-8 rounded-[24px] border border-outline-variant/20 bg-surface-container-low px-5 py-4">
-                    <summary class="cursor-pointer list-none text-sm font-medium text-primary">
-                        <div class="flex items-center justify-between gap-4">
-                            <span class="flex items-center gap-2">
-                                <span class="material-symbols-outlined text-base">tune</span>
-                                高级导入设置
-                            </span>
-                            <span class="text-xs font-label text-secondary">元数据补录 / 强制重建索引</span>
-                        </div>
-                    </summary>
-
-                    <div class="mt-5 grid grid-cols-1 gap-6 md:grid-cols-2">
-                        <label class="space-y-2 md:col-span-2">
-                            <span class="block text-xs font-label font-medium uppercase tracking-[0.22em] text-secondary">Source Path / 来源路径或 URL</span>
-                            <input id="ov_source_path" class="w-full rounded-2xl border-0 bg-surface-container-lowest px-4 py-3 text-sm text-on-surface transition-colors focus:ring-2 focus:ring-primary" placeholder="可选，用于覆盖默认文件路径">
-                        </label>
-
-                        <label class="space-y-2">
-                            <span class="block text-xs font-label font-medium uppercase tracking-[0.22em] text-secondary">Force Mode / 导入策略</span>
-                            <select id="ov_force" class="w-full rounded-2xl border-0 bg-surface-container-lowest px-4 py-3 text-sm text-on-surface transition-colors focus:ring-2 focus:ring-primary">
-                                <option value="">默认导入</option>
-                                <option value="metadata_only">仅更新元数据</option>
-                                <option value="reindex">重新入库并重建索引</option>
-                            </select>
-                        </label>
-
-                        <div class="rounded-[24px] border border-dashed border-outline-variant/30 bg-surface-container-lowest px-4 py-4 text-sm leading-6 text-secondary">
-                            <p class="font-medium text-primary">小提醒</p>
-                            <p class="mt-2">如果同一文件已经入库，默认会提示“已存在”。只有你明确选择重新入库，才会走重建索引。</p>
-                        </div>
-                    </div>
-                </details>
+            <div class="mt-6 flex flex-wrap gap-2">
+                <button class="task-segment active" data-side-filter="processing" type="button">进行中 <span data-filter-count="processing">(0)</span></button>
+                <button class="task-segment" data-side-filter="completed" type="button">已完成 <span data-filter-count="completed">(0)</span></button>
+                <button class="task-segment" data-side-filter="failed" type="button">已失败 <span data-filter-count="failed">(0)</span></button>
             </div>
-        </section>
 
-        <aside class="lg:col-span-1">
-            <!-- [修改] 右侧任务列表改成更清晰的导入线程，同时接回原来的轮询和日志 -->
-            <div class="ambient-shadow glass-panel rounded-[28px] border border-white/30 p-6">
-                <div class="flex items-center justify-between gap-3">
-                    <div>
-                        <h2 class="text-lg font-semibold text-primary">导入任务</h2>
-                        <p class="mt-1 text-sm text-secondary">最近 5 项，本地缓存可跨刷新保留</p>
-                    </div>
-                    <span class="rounded-full bg-surface-container-low px-3 py-1 text-xs font-label text-secondary">实时状态</span>
-                </div>
+            <div id="taskFeed" class="mt-5 space-y-3"></div>
 
-                <div class="relative mt-6">
-                    <div class="absolute bottom-2 left-[15px] top-2 w-px bg-primary-fixed"></div>
-                    <div id="taskFeed" class="space-y-4"></div>
-                </div>
-
-                <button id="clearTasksBtn" class="mt-8 w-full rounded-2xl bg-transparent py-2.5 text-sm font-medium text-primary transition-colors hover:bg-surface-container-low" type="button">
-                    清空本地任务记录
-                </button>
-            </div>
+            <button id="clearTasksBtn" class="mt-6 inline-flex items-center gap-2 text-sm font-medium text-secondary transition-colors hover:text-primary" type="button">
+                <span class="material-symbols-outlined text-base">delete_sweep</span>
+                清空本地任务记录
+            </button>
         </aside>
-    </div>
+    </section>
+
+    <section class="ambient-shadow mt-5 overflow-hidden rounded-[30px] border border-outline-variant/15 bg-surface-container-lowest">
+        <div class="border-b border-outline-variant/15 px-5 py-5 md:px-6">
+            <div class="flex flex-col gap-4 2xl:flex-row 2xl:items-start 2xl:justify-between">
+                <div class="flex-1">
+                    <div class="flex flex-wrap gap-2" id="metaTypeChips">
+                        <button class="meta-type-chip active" data-meta-type="" type="button"><span class="chip-dot"></span>自动识别</button>
+                        <button class="meta-type-chip" data-meta-type="attraction" type="button"><span class="chip-dot"></span>景点介绍</button>
+                        <button class="meta-type-chip" data-meta-type="route" type="button"><span class="chip-dot"></span>线路推荐</button>
+                        <button class="meta-type-chip" data-meta-type="hotel" type="button"><span class="chip-dot"></span>酒店信息</button>
+                        <button class="meta-type-chip" data-meta-type="food" type="button"><span class="chip-dot"></span>美食推荐</button>
+                        <button class="meta-type-chip" data-meta-type="transport" type="button"><span class="chip-dot"></span>交通指南</button>
+                        <button class="meta-type-chip" data-meta-type="culture" type="button"><span class="chip-dot"></span>文化民俗</button>
+                    </div>
+
+                    <div class="mt-4 grid gap-3 lg:grid-cols-[1fr_1fr_1fr_auto]">
+                        <input id="ov_document_title" class="h-12 rounded-2xl border border-outline-variant/20 bg-surface-container-low px-4 text-sm text-on-surface outline-none transition focus:border-primary-fixed-dim focus:bg-white focus:ring-4 focus:ring-primary-fixed/40" placeholder="景区 / 景点名称，例如：三亚天涯海角">
+                        <input id="ov_region" class="h-12 rounded-2xl border border-outline-variant/20 bg-surface-container-low px-4 text-sm text-on-surface outline-none transition focus:border-primary-fixed-dim focus:bg-white focus:ring-4 focus:ring-primary-fixed/40" placeholder="地区 / 城市，例如：海南 / 三亚">
+                        <input id="ov_source_label_display" class="h-12 rounded-2xl border border-outline-variant/20 bg-surface-container-low px-4 text-sm text-on-surface outline-none transition focus:border-primary-fixed-dim focus:bg-white focus:ring-4 focus:ring-primary-fixed/40" placeholder="来源标签，例如：三亚文旅局 2026 指南">
+                        <div class="flex gap-2 lg:justify-end">
+                            <button id="clearMetaBtn" class="inline-flex h-12 items-center justify-center rounded-2xl bg-surface-container-low px-5 text-sm font-semibold text-secondary transition hover:bg-surface-container-high" type="button">清空元数据</button>
+                            <button id="startImportBtn" class="inline-flex h-12 items-center justify-center rounded-2xl bg-gradient-to-r from-accent to-[#ff9f42] px-6 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(255,138,28,0.22)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgba(255,138,28,0.24)]" type="button">开始导入</button>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 flex flex-wrap items-center gap-3 text-xs font-label text-secondary">
+                        <span id="selectedFileBadge" class="rounded-full bg-surface-container-low px-3 py-1.5">尚未选择文件</span>
+                        <span class="rounded-full bg-surface-container-low px-3 py-1.5">支持多文件自动排队</span>
+                    </div>
+                </div>
+            </div>
+
+            <details class="mt-5 rounded-[24px] border border-outline-variant/15 bg-surface-container-low px-4 py-4">
+                <summary class="cursor-pointer list-none text-sm font-semibold text-primary">高级导入设置</summary>
+                <div class="mt-4 grid gap-3 lg:grid-cols-[1fr_260px_180px]">
+                    <input id="ov_source_path" class="h-11 rounded-2xl border border-outline-variant/20 bg-white px-4 text-sm text-on-surface outline-none transition focus:border-primary-fixed-dim focus:ring-4 focus:ring-primary-fixed/40" placeholder="来源路径或 URL（可选）">
+                    <select id="ov_force" class="h-11 rounded-2xl border border-outline-variant/20 bg-white px-4 text-sm text-on-surface outline-none transition focus:border-primary-fixed-dim focus:ring-4 focus:ring-primary-fixed/40">
+                        <option value="">默认导入</option>
+                        <option value="metadata_only">仅更新元数据</option>
+                        <option value="reindex">重新入库并重建索引</option>
+                    </select>
+                    <select id="ov_content_type" class="h-11 rounded-2xl border border-outline-variant/20 bg-white px-4 text-sm text-on-surface outline-none transition focus:border-primary-fixed-dim focus:ring-4 focus:ring-primary-fixed/40">
+                        <option value="">自动识别</option>
+                    </select>
+                </div>
+                <p class="mt-3 text-xs leading-6 text-secondary">如果同一个文件已经导入过，默认会直接复用。只有你明确选择“重新入库”，才会触发重建索引。</p>
+            </details>
+        </div>
+
+        <div class="px-0 pb-2 pt-0">
+            <div class="flex items-center justify-between px-5 py-4 md:px-6">
+                <div>
+                    <h2 class="text-2xl font-bold tracking-tight text-primary">任务列表</h2>
+                    <p class="mt-1 text-sm text-secondary">这里展示本地记录里的全部导入任务，真实进度来自后端轮询。</p>
+                </div>
+            </div>
+
+            <div class="task-table-head">
+                <div>文档</div>
+                <div>类型</div>
+                <div>进度</div>
+                <div>最近动作</div>
+                <div>状态</div>
+            </div>
+            <div id="taskTableBody"></div>
+        </div>
+    </section>
 </main>
 
 <nav class="fixed bottom-0 left-0 z-50 flex w-full items-center justify-around rounded-t-2xl bg-white/90 px-4 py-2 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] backdrop-blur-xl md:hidden">
@@ -296,78 +522,58 @@
 </nav>
 
 <script>
+    // [修改] 导入逻辑保留原协议，但重新组织成“顶部摘要 + 右侧任务卡 + 底部任务表”
     const API_BASE = window.location.protocol.startsWith("http")
         ? `${window.location.protocol}//${window.location.host}`
         : "http://127.0.0.1:8000";
 
-    const STORAGE_KEY = "easytour_import_tasks_v2";
-    const MAX_TASKS = 5;
+    const STORAGE_KEY = "easytour_import_tasks_v3";
+    const MAX_TASKS = 12;
 
     const CONTENT_TYPE_LABELS = {
-        attraction: "景点",
-        route: "路线",
-        hotel: "酒店",
-        food: "美食",
-        transport: "交通",
-        culture: "文化"
+        attraction: "景点介绍",
+        route: "线路推荐",
+        hotel: "酒店信息",
+        food: "美食推荐",
+        transport: "交通指南",
+        culture: "文化民俗"
     };
 
     const STATUS_META = {
-        uploading: {
-            label: "上传中",
-            icon: "arrow_upward",
-            tone: "warning",
-            summary: "文件正在发送到服务端"
-        },
-        pending: {
-            label: "排队中",
-            icon: "schedule",
-            tone: "pending",
-            summary: "任务已经进入队列，马上开始处理"
-        },
-        processing: {
-            label: "处理中",
-            icon: "sync",
-            tone: "processing",
-            summary: "系统正在抽取结构化信息"
-        },
-        completed: {
-            label: "已完成",
-            icon: "check",
-            tone: "success",
-            summary: "导入成功，知识已经入库"
-        },
-        already_imported: {
-            label: "已存在",
-            icon: "inventory_2",
-            tone: "success",
-            summary: "这个文件之前已经导入过了，直接复用现有文档"
-        },
-        requires_reindex: {
-            label: "需重建",
-            icon: "warning",
-            tone: "warning",
-            summary: "内容类型变化，需要选择“重新入库”"
-        },
-        failed: {
-            label: "失败",
-            icon: "close",
-            tone: "error",
-            summary: "导入过程中出了点问题"
-        }
+        uploading: { label: "上传中", summary: "文件正在发送到服务端", group: "processing" },
+        pending: { label: "排队中", summary: "任务已进入队列，等待后台开始处理", group: "processing" },
+        processing: { label: "处理中", summary: "系统正在解析、切片或写入向量库", group: "processing" },
+        completed: { label: "已完成", summary: "导入成功，知识已经入库", group: "completed" },
+        already_imported: { label: "已复用", summary: "文件已存在，直接复用现有文档", group: "completed" },
+        requires_reindex: { label: "需重建", summary: "内容类型变化，只有重新入库才能更新索引", group: "failed" },
+        failed: { label: "失败", summary: "导入过程中出了问题", group: "failed" }
     };
 
     const dropZone = document.getElementById("dropZone");
     const fileInput = document.getElementById("fileInput");
     const pickFileBtn = document.getElementById("pickFileBtn");
+    const startImportBtn = document.getElementById("startImportBtn");
+    const clearMetaBtn = document.getElementById("clearMetaBtn");
     const selectedHint = document.getElementById("selectedHint");
+    const selectedFileBadge = document.getElementById("selectedFileBadge");
     const taskFeed = document.getElementById("taskFeed");
+    const taskTableBody = document.getElementById("taskTableBody");
     const clearTasksBtn = document.getElementById("clearTasksBtn");
     const contentTypeSelect = document.getElementById("ov_content_type");
+    const sideFilterButtons = Array.from(document.querySelectorAll("[data-side-filter]"));
+    const metaTypeChips = Array.from(document.querySelectorAll("[data-meta-type]"));
+
+    const heroTaskCount = document.getElementById("heroTaskCount");
+    const heroTaskMeta = document.getElementById("heroTaskMeta");
+    const heroSuccessRate = document.getElementById("heroSuccessRate");
+    const heroSuccessMeta = document.getElementById("heroSuccessMeta");
+    const heroRunningCount = document.getElementById("heroRunningCount");
+    const heroRunningMeta = document.getElementById("heroRunningMeta");
 
     const activePolls = new Map();
     const state = {
-        tasks: loadStoredTasks()
+        tasks: loadStoredTasks(),
+        sideFilter: "processing"
     };
 
     function escapeHtml(value) {
@@ -396,11 +602,44 @@
         return `${Math.floor(diff / 86400000)} 天前`;
     }
 
+    function getTaskStatusGroup(status) {
+        return STATUS_META[status]?.group || "processing";
+    }
+
+    function getFileExtension(name) {
+        const suffix = String(name || "").split(".").pop() || "";
+        return suffix.toUpperCase();
+    }
+
+    function getFileBadgeClasses(extension) {
+        const ext = String(extension || "").toUpperCase();
+        if (ext === "PDF") return "bg-[#fde3df] text-[#b8463f]";
+        if (ext === "MD") return "bg-[#dff1e6] text-[#168466]";
+        return "bg-[#e2e9fb] text-[#4566b2]";
+    }
+
+    function getTagClasses(contentType) {
+        if (contentType === "attraction") return "bg-[#edf3ff] text-[#2854b3]";
+        if (contentType === "route") return "bg-[#fff0d8] text-[#a96817]";
+        if (contentType === "hotel") return "bg-[#f0eaff] text-[#6a4cc9]";
+        if (contentType === "food") return "bg-[#ffe9e2] text-[#c15d2f]";
+        if (contentType === "transport") return "bg-[#e1f4eb] text-[#17805e]";
+        if (contentType === "culture") return "bg-[#e8eef7] text-[#566784]";
+        return "bg-surface-container-low text-secondary";
+    }
+
+    function getStatusBadgeClasses(status) {
+        const group = getTaskStatusGroup(status);
+        if (group === "completed") return "bg-success-surface text-success-text";
+        if (group === "failed") return "bg-danger-surface text-danger-text";
+        return "bg-primary-fixed text-primary";
+    }
+
     function loadStoredTasks() {
         try {
             const raw = localStorage.getItem(STORAGE_KEY);
-            const tasks = JSON.parse(raw || "[]");
-            return Array.isArray(tasks) ? tasks : [];
+            const items = JSON.parse(raw || "[]");
+            return Array.isArray(items) ? items : [];
         } catch (_) {
             return [];
         }
@@ -425,17 +664,7 @@
             state.tasks.unshift({ ...patch, updatedAt: Date.now() });
         }
         persistTasks();
-        renderTasks();
-    }
-
-    function appendTaskLogs(localId, lines) {
-        const task = getTask(localId);
-        if (!task) return;
-        const merged = [...(Array.isArray(task.logs) ? task.logs : []), ...(Array.isArray(lines) ? lines : [])];
-        task.logs = merged.slice(-12);
-        task.updatedAt = Date.now();
-        persistTasks();
-        renderTasks();
+        renderImportDashboard();
     }
 
     function createTask(file) {
@@ -444,136 +673,18 @@
             name: file.name,
             sizeLabel: humanFileSize(file.size),
             createdAt: Date.now(),
+            updatedAt: Date.now(),
             status: "uploading",
             progress: 8,
             summary: STATUS_META.uploading.summary,
             logs: ["文件已选中，准备上传"],
-            totalSteps: getEstimatedSteps(file.name),
-            forceMode: document.getElementById("ov_force").value || "",
+            totalSteps: String(file.name || "").toLowerCase().endsWith(".pdf") ? 8 : 7,
             documentId: "",
-            taskId: ""
+            taskId: "",
+            contentType: contentTypeSelect.value || "",
+            itemName: document.getElementById("ov_document_title").value.trim() || "",
+            regionPath: document.getElementById("ov_region").value.trim() || ""
         };
-    }
-
-    function getEstimatedSteps(fileName) {
-        const lowerName = String(fileName || "").toLowerCase();
-        return lowerName.endsWith(".pdf") ? 8 : 7;
-    }
-
-    function getToneClasses(tone) {
-        if (tone === "success") {
-            return {
-                iconWrap: "bg-success-surface text-success-text",
-                badge: "bg-success-surface text-success-text"
-            };
-        }
-        if (tone === "warning") {
-            return {
-                iconWrap: "bg-warning-surface text-warning-text",
-                badge: "bg-warning-surface text-warning-text"
-            };
-        }
-        if (tone === "error") {
-            return {
-                iconWrap: "bg-error-container text-on-error-container",
-                badge: "bg-error-container text-on-error-container"
-            };
-        }
-        if (tone === "processing") {
-            return {
-                iconWrap: "bg-primary-fixed text-primary",
-                badge: "bg-primary-fixed text-primary"
-            };
-        }
-        return {
-            iconWrap: "bg-surface-container-high text-secondary",
-            badge: "bg-surface-container-high text-secondary"
-        };
-    }
-
-    function buildTaskDetails(task) {
-        const details = [];
-        if (task.itemName) details.push(`主条目：${task.itemName}`);
-        if (task.regionPath) details.push(`地区：${task.regionPath}`);
-        if (task.chunkCount) details.push(`切片：${task.chunkCount}`);
-        if (task.contentType) details.push(`类型：${CONTENT_TYPE_LABELS[task.contentType] || task.contentType}`);
-        return details;
-    }
-
-    function renderTasks() {
-        if (!state.tasks.length) {
-            taskFeed.innerHTML = `
-                <div class="task-enter relative z-10 rounded-[24px] border border-dashed border-outline-variant/30 bg-surface-container-low p-5 text-sm text-secondary">
-                    <div class="flex items-start gap-4">
-                        <div class="mt-0.5 flex h-9 w-9 items-center justify-center rounded-2xl bg-primary-fixed text-primary">
-                            <span class="material-symbols-outlined">upload_file</span>
-                        </div>
-                        <div>
-                            <div class="font-medium text-primary">还没有导入任务</div>
-                            <p class="mt-1 leading-6">把 PDF 或 MD 拖进左侧区域，右边就会开始实时滚动状态。</p>
-                        </div>
-                    </div>
-                </div>
-            `;
-            return;
-        }
-
-        taskFeed.innerHTML = state.tasks.map((task) => {
-            const meta = STATUS_META[task.status] || STATUS_META.processing;
-            const tones = getToneClasses(meta.tone);
-            const details = buildTaskDetails(task);
-            const logs = Array.isArray(task.logs) ? task.logs : [];
-            const showProgress = task.status === "uploading" || task.status === "pending" || task.status === "processing";
-
-            return `
-                <div class="task-enter relative z-10 flex gap-4 rounded-[24px] border border-outline-variant/18 bg-surface-container-low p-4">
-                    <div class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${tones.iconWrap}">
-                        <span class="material-symbols-outlined text-[15px] ${task.status === "processing" ? "animate-spin" : ""}">${meta.icon}</span>
-                    </div>
-
-                    <div class="min-w-0 flex-1">
-                        <div class="flex items-start justify-between gap-3">
-                            <div class="min-w-0">
-                                <h3 class="truncate text-sm font-medium text-on-surface">${escapeHtml(task.name)}</h3>
-                                <p class="mt-1 text-xs leading-5 text-secondary">${escapeHtml(task.summary || meta.summary)}</p>
-                            </div>
-                            <span class="shrink-0 rounded-full px-2.5 py-1 text-[10px] font-label font-semibold ${tones.badge}">${meta.label}</span>
-                        </div>
-
-                        <div class="mt-2 flex flex-wrap items-center gap-2 text-[10px] font-label text-outline">
-                            <span>${escapeHtml(task.sizeLabel || "")}</span>
-                            <span>•</span>
-                            <span>${formatRelativeTime(task.updatedAt || task.createdAt)}</span>
-                            ${task.documentId ? `<span>•</span><span>ID ${escapeHtml(task.documentId.slice(0, 8))}</span>` : ""}
-                        </div>
-
-                        ${showProgress ? `
-                            <div class="mt-3">
-                                <div class="h-1.5 overflow-hidden rounded-full bg-surface-container-high">
-                                    <div class="h-1.5 rounded-full bg-gradient-to-r from-primary to-primary-container transition-all duration-500" style="width:${Math.max(0, Math.min(100, Number(task.progress || 0)))}%"></div>
-                                </div>
-                                <div class="mt-1 text-right text-[10px] font-label text-secondary">${Math.round(Number(task.progress || 0))}%</div>
-                            </div>
-                        ` : ""}
-
-                        ${details.length ? `
-                            <div class="mt-3 flex flex-wrap gap-2">
-                                ${details.map((detail) => `<span class="rounded-full bg-surface-container-lowest px-3 py-1 text-[11px] text-secondary">${escapeHtml(detail)}</span>`).join("")}
-                            </div>
-                        ` : ""}
-
-                        ${logs.length ? `
-                            <details class="mt-3 rounded-2xl bg-surface-container-lowest px-4 py-3">
-                                <summary class="cursor-pointer text-xs font-medium text-primary">查看处理日志</summary>
-                                <ul class="task-log mt-3 max-h-28 space-y-2 overflow-y-auto pr-2 text-xs leading-5 text-secondary">
-                                    ${logs.map((line) => `<li>• ${escapeHtml(line)}</li>`).join("")}
-                                </ul>
-                            </details>
-                        ` : ""}
-                    </div>
-                </div>
-            `;
-        }).join("");
     }
 
     function collectOverrides() {
@@ -600,9 +711,7 @@
         const running = Array.isArray(runningList) ? runningList.length : 0;
         const steps = Math.max(Number(estimatedSteps || 1), done + running + 1);
         let progress = (done / steps) * 100;
-        if (running > 0) {
-            progress += (0.5 / steps) * 100;
-        }
+        if (running > 0) progress += (0.5 / steps) * 100;
         return Math.min(Math.max(progress, 12), 94);
     }
 
@@ -612,17 +721,11 @@
             const chunks = data.chunk_count ? ` · ${data.chunk_count} 个切片` : "";
             return `${headline}${chunks}`;
         }
-        if (data.status === "failed") {
-            return data.error || "导入失败";
-        }
+        if (data.status === "failed") return data.error || "导入失败";
         const running = Array.isArray(data.running_list) && data.running_list.length ? data.running_list[0] : "";
         const done = Array.isArray(data.done_list) ? data.done_list.length : 0;
-        if (running) {
-            return `正在处理：${running}`;
-        }
-        if (done > 0) {
-            return `已完成 ${done} 个步骤，继续处理中`;
-        }
+        if (running) return `正在处理：${running}`;
+        if (done > 0) return `已完成 ${done} 个步骤，继续处理中`;
         return STATUS_META[data.status]?.summary || "任务处理中";
     }
 
@@ -651,13 +754,12 @@
                 documentId,
                 itemName: entity.item_name || doc.document_title || "",
                 regionPath: doc.region_path || "",
-                chunkCount: doc.chunk_count || 0,
                 contentType: doc.content_type || "",
                 summary: `已复用现有文档${doc.region_path ? ` · ${doc.region_path}` : ""}`,
                 logs: ["文件已存在，未重复入库", `文档 ID：${documentId}`]
             });
         } catch (_) {
-            // 静默失败，避免影响主流程
+            // ignore
         }
     }
 
@@ -688,14 +790,18 @@
                     logs: buildLogsFromStatus(data),
                     itemName: data.item_name || "",
                     regionPath: data.region_path || "",
-                    chunkCount: data.chunk_count || 0
+                    contentType: getTask(localId)?.contentType || ""
                 });
 
-                if (data.status === "completed" || data.status === "failed") {
-                    stopPolling(localId);
-                }
+                if (data.status === "completed" || data.status === "failed") stopPolling(localId);
             } catch (error) {
-                appendTaskLogs(localId, [`状态轮询失败：${error.message || error}`]);
+                upsertTask({
+                    localId,
+                    status: "failed",
+                    summary: error.message || "状态轮询失败",
+                    logs: [`状态轮询失败：${error.message || error}`]
+                });
+                stopPolling(localId);
             }
         }, 1500);
 
@@ -728,7 +834,7 @@
                     logs: [
                         "服务端拒绝本次元数据更新",
                         "原因：content_type 发生变化",
-                        "如果你确认要覆盖，切换成“重新入库并重建索引”后再传一次"
+                        "如果你确认要覆盖，请切换成“重新入库并重建索引”后再传一次"
                     ]
                 });
                 return;
@@ -777,15 +883,48 @@
         const list = Array.from(files || []);
         if (!list.length) return;
         selectedHint.textContent = `已选中 ${list.length} 个文件，开始排队导入`;
+        selectedFileBadge.textContent = list.length === 1 ? list[0].name : `已选择 ${list.length} 个文件`;
         list.forEach(uploadFile);
+    }
+
+    function openFilePicker() {
+        fileInput.click();
+    }
+
+    function resetMetaFields() {
+        document.getElementById("ov_document_title").value = "";
+        document.getElementById("ov_region").value = "";
+        document.getElementById("ov_source_label_display").value = "";
+        document.getElementById("ov_source_path").value = "";
+        document.getElementById("ov_force").value = "";
+        contentTypeSelect.value = "";
+        selectedFileBadge.textContent = "尚未选择文件";
+        selectedHint.textContent = "支持多选，上传后自动开始导入";
+        syncContentTypeControls();
+    }
+
+    function ensureFallbackContentTypes() {
+        contentTypeSelect.innerHTML = '<option value="">自动识别</option>';
+        Object.entries(CONTENT_TYPE_LABELS).forEach(([value, label]) => {
+            const option = document.createElement("option");
+            option.value = value;
+            option.textContent = label;
+            contentTypeSelect.appendChild(option);
+        });
     }
 
     async function loadContentTypes() {
         try {
             const response = await fetch(`${API_BASE}/meta/content_types`);
-            if (!response.ok) return;
+            if (!response.ok) {
+                ensureFallbackContentTypes();
+                syncContentTypeControls();
+                return;
+            }
+
             const items = await response.json();
             const options = Array.isArray(items) ? items : [];
+            contentTypeSelect.innerHTML = '<option value="">自动识别</option>';
             options.forEach((item) => {
                 const option = document.createElement("option");
                 option.value = item.value;
@@ -793,27 +932,172 @@
                 contentTypeSelect.appendChild(option);
             });
         } catch (_) {
-            Object.entries(CONTENT_TYPE_LABELS).forEach(([value, label]) => {
-                const option = document.createElement("option");
-                option.value = value;
-                option.textContent = label;
-                contentTypeSelect.appendChild(option);
-            });
+            ensureFallbackContentTypes();
         }
+        syncContentTypeControls();
+    }
+
+    function syncContentTypeControls() {
+        const activeType = contentTypeSelect.value;
+        metaTypeChips.forEach((chip) => {
+            chip.classList.toggle("active", chip.dataset.metaType === activeType);
+        });
+    }
+
+    function getCounts() {
+        const processing = state.tasks.filter((task) => getTaskStatusGroup(task.status) === "processing").length;
+        const completed = state.tasks.filter((task) => getTaskStatusGroup(task.status) === "completed").length;
+        const failed = state.tasks.filter((task) => getTaskStatusGroup(task.status) === "failed").length;
+        return { processing, completed, failed, total: state.tasks.length };
+    }
+
+    function syncHeroStats() {
+        const { total, completed, processing } = getCounts();
+        const successRate = total ? Math.round((completed / total) * 100) : 0;
+        const latestTask = state.tasks[0];
+
+        heroTaskCount.textContent = String(total);
+        heroTaskMeta.textContent = total ? `最近同步 ${total} 条本地记录` : "等待导入";
+
+        heroSuccessRate.textContent = `${successRate}%`;
+        heroSuccessMeta.textContent = `已完成 ${completed} / 总 ${total || 0}`;
+
+        heroRunningCount.textContent = String(processing);
+        heroRunningMeta.textContent = processing
+            ? `${processing} 个任务仍在后台处理中`
+            : (latestTask ? `最近更新 · ${formatRelativeTime(latestTask.updatedAt || latestTask.createdAt)}` : "暂无后台处理");
+    }
+
+    function renderSideFilters() {
+        const counts = getCounts();
+        sideFilterButtons.forEach((button) => {
+            const filter = button.dataset.sideFilter;
+            button.classList.toggle("active", filter === state.sideFilter);
+            const countEl = button.querySelector(`[data-filter-count="${filter}"]`);
+            if (countEl) {
+                const value = filter === "processing" ? counts.processing : (filter === "completed" ? counts.completed : counts.failed);
+                countEl.textContent = `(${value})`;
+            }
+        });
+    }
+
+    function buildSideTaskCard(task) {
+        const extension = getFileExtension(task.name);
+        const badgeClass = getFileBadgeClasses(extension);
+        const meta = STATUS_META[task.status] || STATUS_META.processing;
+
+        return `
+            <div class="rounded-[22px] border border-outline-variant/15 bg-surface-container-low px-4 py-4">
+                <div class="flex items-start gap-3">
+                    <div class="file-pill ${badgeClass}">${escapeHtml(extension || "FILE")}</div>
+                    <div class="min-w-0 flex-1">
+                        <div class="truncate text-base font-semibold text-on-surface">${escapeHtml(task.name)}</div>
+                        <div class="mt-1 text-sm text-secondary">${escapeHtml(task.summary || meta.summary)}</div>
+                        <div class="mt-3 flex items-center justify-between gap-3">
+                            <span class="rounded-full ${getStatusBadgeClasses(task.status)} px-3 py-1 text-xs font-label font-semibold">${meta.label}</span>
+                            <span class="text-xs font-label text-secondary">${formatRelativeTime(task.updatedAt || task.createdAt)}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderSideFeed() {
+        const items = state.tasks
+            .filter((task) => getTaskStatusGroup(task.status) === state.sideFilter)
+            .slice(0, 5);
+
+        if (!items.length) {
+            const label = state.sideFilter === "processing" ? "进行中" : (state.sideFilter === "completed" ? "已完成" : "失败");
+            taskFeed.innerHTML = `
+                <div class="rounded-[22px] border border-dashed border-outline-variant/20 bg-surface-container-low px-4 py-6 text-sm leading-6 text-secondary">
+                    当前没有“${label}”任务，等你上传新文件后，这里会自动刷新。
+                </div>
+            `;
+            return;
+        }
+
+        taskFeed.innerHTML = items.map(buildSideTaskCard).join("");
+    }
+
+    function buildTaskTableRow(task) {
+        const extension = getFileExtension(task.name);
+        const badgeClass = getFileBadgeClasses(extension);
+        const contentType = CONTENT_TYPE_LABELS[task.contentType] || "自动识别";
+        const progressGroup = getTaskStatusGroup(task.status);
+        const progressClass = progressGroup === "completed" ? "done" : (progressGroup === "failed" ? "fail" : "running");
+        const meta = STATUS_META[task.status] || STATUS_META.processing;
+        const progressLabel = progressGroup === "failed" ? "失败" : `${Math.round(Number(task.progress || 0))}%`;
+
+        return `
+            <div class="task-table-row">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="file-pill ${badgeClass}">${escapeHtml(extension || "FILE")}</div>
+                    <div class="min-w-0">
+                        <div class="truncate text-[0.98rem] font-semibold text-on-surface">${escapeHtml(task.name)}</div>
+                        <div class="mt-1 text-sm text-secondary">${escapeHtml(task.summary || meta.summary)}</div>
+                        <div class="mt-1 text-xs font-label text-outline">${escapeHtml(task.sizeLabel || "")}${task.regionPath ? ` · ${escapeHtml(task.regionPath)}` : ""}</div>
+                    </div>
+                </div>
+                <div>
+                    <span class="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold ${getTagClasses(task.contentType)}">
+                        <span class="h-1.5 w-1.5 rounded-full bg-current opacity-70"></span>
+                        ${escapeHtml(contentType)}
+                    </span>
+                </div>
+                <div>
+                    <div class="flex items-center gap-3">
+                        <div class="progress-track flex-1">
+                            <div class="progress-fill ${progressClass}" style="width:${Math.max(0, Math.min(100, Number(task.progress || 0)))}%"></div>
+                        </div>
+                        <span class="min-w-[40px] text-right text-xs font-label text-secondary">${escapeHtml(progressLabel)}</span>
+                    </div>
+                </div>
+                <div class="text-sm text-secondary">${formatRelativeTime(task.updatedAt || task.createdAt)}</div>
+                <div>
+                    <span class="inline-flex items-center rounded-full px-3 py-1.5 text-xs font-label font-semibold ${getStatusBadgeClasses(task.status)}">${meta.label}</span>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderTaskTable() {
+        if (!state.tasks.length) {
+            taskTableBody.innerHTML = `
+                <div class="task-table-row">
+                    <div class="col-span-full rounded-[24px] border border-dashed border-outline-variant/20 bg-surface-container-low px-5 py-8 text-sm leading-6 text-secondary">
+                        还没有任何导入任务。你可以先选一个 PDF 或 MD 文件试试，下面这张表会开始变得有内容。
+                    </div>
+                </div>
+            `;
+            return;
+        }
+
+        taskTableBody.innerHTML = state.tasks.map(buildTaskTableRow).join("");
+    }
+
+    function renderImportDashboard() {
+        syncHeroStats();
+        renderSideFilters();
+        renderSideFeed();
+        renderTaskTable();
     }
 
     function resumeActiveTasks() {
         state.tasks.forEach((task) => {
-            if ((task.status === "processing" || task.status === "pending" || task.status === "uploading") && task.taskId) {
+            if (getTaskStatusGroup(task.status) === "processing" && task.taskId) {
                 startPolling(task.localId, task.taskId, task.totalSteps || 8);
             }
         });
     }
 
-    pickFileBtn.addEventListener("click", () => fileInput.click());
+    pickFileBtn.addEventListener("click", openFilePicker);
+    startImportBtn.addEventListener("click", openFilePicker);
+
     dropZone.addEventListener("click", (event) => {
-        if (pickFileBtn.contains(event.target)) return;
-        fileInput.click();
+        if (pickFileBtn.contains(event.target) || startImportBtn.contains(event.target)) return;
+        openFilePicker();
     });
 
     fileInput.addEventListener("change", (event) => {
@@ -836,18 +1120,35 @@
         handleFiles(event.dataTransfer.files);
     });
 
+    sideFilterButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+            state.sideFilter = button.dataset.sideFilter;
+            renderImportDashboard();
+        });
+    });
+
+    metaTypeChips.forEach((chip) => {
+        chip.addEventListener("click", () => {
+            contentTypeSelect.value = chip.dataset.metaType || "";
+            syncContentTypeControls();
+        });
+    });
+
+    contentTypeSelect.addEventListener("change", syncContentTypeControls);
+
+    clearMetaBtn.addEventListener("click", resetMetaFields);
+
     clearTasksBtn.addEventListener("click", () => {
         if (!state.tasks.length) return;
-        if (!window.confirm("要清空右侧这些本地任务记录吗？这不会删除后端知识库，只是把页面记忆清掉。")) return;
+        if (!window.confirm("要清空本地任务记录吗？这不会删除知识库里的数据，只是清掉这个页面保存的任务视图。")) return;
         activePolls.forEach((timer) => clearInterval(timer));
         activePolls.clear();
         state.tasks = [];
         localStorage.removeItem(STORAGE_KEY);
-        renderTasks();
-        selectedHint.textContent = "支持多选 · 刷新后保留本地任务记录";
+        renderImportDashboard();
     });
 
-    renderTasks();
+    renderImportDashboard();
     loadContentTypes();
     resumeActiveTasks();
 </script>

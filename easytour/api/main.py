@@ -10,7 +10,7 @@ from urllib.parse import unquote, urlparse
 import uvicorn
 from fastapi import BackgroundTasks, Depends, FastAPI, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from easytour.core.deps import (
@@ -102,6 +102,8 @@ def create_app() -> FastAPI:
     )
 
     front_page_dir = get_front_page_dir()
+    # [修改] 根目录 logo 需要单独暴露，前端头部才能统一复用同一张品牌图。
+    logo_path = Path(front_page_dir).resolve().parent.parent / 'logo.png'
     if os.path.exists(front_page_dir):
         app.mount('/front', StaticFiles(directory=front_page_dir), name='front')
 
@@ -129,6 +131,12 @@ def create_app() -> FastAPI:
     async def chat_page() -> FileResponse:
         return FileResponse(os.path.join(front_page_dir, 'chat.html'))
 
+    @app.get('/logo.png')
+    async def logo_asset() -> FileResponse:
+        if not logo_path.exists():
+            raise HTTPException(status_code=404, detail='logo not found')
+        return FileResponse(logo_path)
+
     @app.get('/import')
     @app.get('/import.html')
     async def import_page() -> FileResponse:
@@ -151,6 +159,16 @@ def create_app() -> FastAPI:
         service: MetaService = Depends(get_meta_service),
     ) -> list[dict[str, str]]:
         return [item.model_dump() for item in service.get_items()]
+
+    @app.get('/documents/{document_id}/preview')
+    async def preview_document_chunks(
+        document_id: str,
+        service: DocumentService = Depends(get_document_service),
+    ) -> HTMLResponse:
+        document = service.get_document(document_id)
+        if document is None:
+            return HTMLResponse(_build_preview_not_found_html(document_id), status_code=404)
+        return HTMLResponse(_build_preview_html(document))
 
     @app.get('/documents/{document_id}')
     async def get_document(
@@ -297,6 +315,114 @@ def create_app() -> FastAPI:
         return {'message': 'History cleared', 'deleted_count': deleted_count}
 
     return app
+
+
+def _build_preview_html(document: dict) -> str:
+    import json as _json
+
+    title = document.get('document_title') or document.get('file_title') or '文档预览'
+    city = document.get('city') or ''
+    region_path = document.get('region_path') or ''
+    content_type_map = {
+        'attraction': '景点', 'route': '路线', 'hotel': '酒店',
+        'food': '美食', 'transport': '交通', 'culture': '文化',
+    }
+    content_type = content_type_map.get(document.get('content_type') or '', document.get('content_type') or '')
+    chunks = document.get('chunks_snapshot') or []
+    chunks_data = [
+        {'title': str(c.get('title') or c.get('parent_title') or ''), 'content': str(c.get('content') or '')}
+        for c in chunks if c.get('content')
+    ]
+    doc_json = _json.dumps(
+        {'title': title, 'city': city, 'region': region_path, 'type': content_type, 'chunks': chunks_data},
+        ensure_ascii=False,
+    )
+    return f'''<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{title} · 引用预览</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+body {{ font-family: "Inter", "Noto Sans SC", sans-serif; background: #f4f7fc; }}
+.prose h1,.prose h2,.prose h3 {{ font-weight:700; margin:1em 0 .4em; color:#00236f; }}
+.prose h1 {{ font-size:1.4rem; }}
+.prose h2 {{ font-size:1.2rem; border-bottom:1px solid #e2e8f0; padding-bottom:.3em; }}
+.prose h3 {{ font-size:1.05rem; }}
+.prose p {{ margin:.5em 0; line-height:1.75; }}
+.prose ul,.prose ol {{ padding-left:1.4em; margin:.5em 0; }}
+.prose li {{ margin:.25em 0; line-height:1.7; }}
+.prose strong {{ font-weight:600; }}
+.prose code {{ background:#eef2ff; color:#3730a3; padding:.1em .35em; border-radius:.3em; font-size:.88em; }}
+.prose pre {{ background:#1e293b; color:#e2e8f0; padding:1em; border-radius:.6em; overflow-x:auto; margin:.75em 0; }}
+.prose pre code {{ background:none; color:inherit; padding:0; }}
+.prose blockquote {{ border-left:3px solid #b6c4ff; padding:.1em 1em; color:#585f6a; margin:.5em 0; background:#f0f4ff; border-radius:0 .4em .4em 0; }}
+.prose table {{ border-collapse:collapse; width:100%; margin:.75em 0; }}
+.prose th,.prose td {{ border:1px solid #e2e8f0; padding:.4em .75em; }}
+.prose th {{ background:#eef2ff; font-weight:600; }}
+</style>
+</head>
+<body class="min-h-screen px-4 py-8">
+<div class="mx-auto max-w-3xl">
+  <div class="mb-6 rounded-2xl bg-white p-6 shadow-sm border border-slate-100">
+    <div class="flex items-start gap-4">
+      <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-900 to-blue-700 text-white font-bold text-lg">ET</div>
+      <div class="flex-1 min-w-0">
+        <h1 class="text-xl font-bold text-slate-900 break-words" id="doc-title"></h1>
+        <div class="mt-2 flex flex-wrap gap-2" id="doc-meta"></div>
+      </div>
+    </div>
+  </div>
+  <div id="chunks-container" class="space-y-4"></div>
+</div>
+<script>
+const DATA = {doc_json};
+const $ = id => document.getElementById(id);
+$("doc-title").textContent = DATA.title;
+const meta = $("doc-meta");
+[DATA.city, DATA.region, DATA.type].filter(Boolean).forEach(tag => {{
+  const span = document.createElement("span");
+  span.className = "rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-800";
+  span.textContent = tag;
+  meta.appendChild(span);
+}});
+const container = $("chunks-container");
+if (!DATA.chunks.length) {{
+  container.innerHTML = '<p class="text-center text-slate-400 py-8">暂无可预览的内容</p>';
+}} else {{
+  DATA.chunks.forEach((chunk, i) => {{
+    const card = document.createElement("div");
+    card.className = "rounded-2xl bg-white p-6 shadow-sm border border-slate-100";
+    let html = "";
+    if (chunk.title) {{
+      html += `<div class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">段落 ${{i+1}} · ${{chunk.title}}</div>`;
+    }} else {{
+      html += `<div class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-400">段落 ${{i+1}}</div>`;
+    }}
+    html += `<div class="prose text-sm text-slate-700">${{marked.parse(chunk.content)}}</div>`;
+    card.innerHTML = html;
+    container.appendChild(card);
+  }});
+}}
+</script>
+</body>
+</html>'''
+
+
+def _build_preview_not_found_html(document_id: str) -> str:
+    return f'''<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>文档未找到</title>
+<script src="https://cdn.tailwindcss.com"></script></head>
+<body class="flex min-h-screen items-center justify-center bg-slate-50">
+<div class="text-center p-8">
+  <div class="text-5xl mb-4">🔍</div>
+  <h1 class="text-xl font-bold text-slate-700">文档未找到</h1>
+  <p class="mt-2 text-sm text-slate-400">ID: {document_id}</p>
+  <p class="mt-1 text-sm text-slate-400">该文档可能已被删除或尚未入库</p>
+</div>
+</body></html>'''
 
 
 def _check_milvus_connected() -> bool:
