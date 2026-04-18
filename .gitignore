@@ -19,8 +19,17 @@ venv/
 
 # Local caches
 .playwright-cli/
+.playwright-mcp/
 .npm-cache/
 .claude/
+
+# Local AI assistant docs / snapshots
+CLAUDE.md
+GEMINI.md
+MVP改造技术方案.md
+需求说明.md
+导入测试.png
+查询测试.png
 
 # Runtime / temp
 # [修改] 当前项目运行时产物实际落在 easytour/temp_data/
