@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 class DocumentMetadataResponse(BaseModel):
     document_id: str = Field(..., description='稳定文档 ID。')
     file_title: str = Field(default='', description='原始文件名。')
-    document_title: str = Field(default='', description='文档标题。')
+    document_title: str = Field(default='', description='文档展示标题。')
     content_type: str = Field(default='', description='文档内容类型。')
     province: str = Field(default='', description='省份。')
     city: str = Field(default='', description='城市。')

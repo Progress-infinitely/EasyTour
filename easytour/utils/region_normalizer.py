@@ -108,6 +108,9 @@ def normalize_region(region_text: str | None) -> RegionInfo:
     else:
         region_parts = [part for part in (province, city) if part]
     region_path = '/'.join(region_parts)
+    # [修改] 未识别出标准省市时，保留原始输入作为 region_path，避免自由文本地区信息被吞掉。
+    if not region_path:
+        region_path = text
 
     return RegionInfo(raw=text, province=province, city=city, region_path=region_path)
 

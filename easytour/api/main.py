@@ -20,6 +20,7 @@ from easytour.core.deps import (
     get_query_service,
 )
 from easytour.core.paths import get_front_page_dir
+from easytour.schema.chunk_schema import CHUNK_PREVIEW_OUTPUT_FIELDS
 from easytour.schema.document_schema import DocumentMetadataResponse
 from easytour.schema.query_schema import QueryRequest, QueryResponse, StreamSubmitResponse
 from easytour.schema.task_schema import TaskStatusResponse
@@ -30,6 +31,7 @@ from easytour.services.meta_service import MetaService
 from easytour.services.query_service import QueryService
 from easytour.utils.client.storage_clients import StorageClients
 from easytour.utils.milvus_util import fetch_chunks_by_chunk_ids
+from easytour.utils.title_util import resolve_chunk_title, resolve_document_title
 from easytour.utils.sse_util import sse_generator
 from easytour.utils.task_util import (
     get_done_task_list,
@@ -50,6 +52,7 @@ def build_task_status_payload(task_id: str) -> dict[str, object]:
         'image_urls': list(get_task_result(task_id, 'image_urls', []) or []),
         'citations': list(get_task_result(task_id, 'citations', []) or []),
         'file_title': str(get_task_result(task_id, 'file_title', '') or ''),
+        'document_title': str(get_task_result(task_id, 'document_title', '') or ''),
         'item_name': str(get_task_result(task_id, 'item_name', '') or ''),
         'chunk_count': int(get_task_result(task_id, 'chunk_count', 0) or 0),
         'document_id': str(get_task_result(task_id, 'document_id', '') or ''),
@@ -330,7 +333,7 @@ def create_app() -> FastAPI:
 def _build_preview_html(document: dict, chunk_id: str | None = None) -> str:
     import json as _json
 
-    title = document.get('document_title') or document.get('file_title') or '文档预览'
+    title = resolve_document_title(document) or '文档预览'
     city = document.get('city') or ''
     region_path = document.get('region_path') or ''
     content_type_map = {
@@ -343,7 +346,7 @@ def _build_preview_html(document: dict, chunk_id: str | None = None) -> str:
     selected_chunk_id = str(chunk_id or '').strip()
     chunks_data = [
         {
-            'title': str(c.get('title') or c.get('parent_title') or ''),
+            'title': resolve_chunk_title(c, default_document_title=title, fallback_file_title=str(document.get('file_title') or '')),
             'content': str(c.get('content') or ''),
             'chunk_id': str(c.get('chunk_id') or ''),
         }
@@ -459,7 +462,11 @@ def _prepare_preview_document(
         preview_document['chunks_snapshot'] = matched_snapshot
         return preview_document
 
-    # [修改] 兼容历史文档：老快照里可能没有 chunk_id，兜底去 Milvus 按 chunk_id 直接捞命中片段。
+    if _snapshot_has_chunk_ids(chunks):
+        preview_document['chunks_snapshot'] = []
+        return preview_document
+
+    # [修改] 只在历史快照完全没有 chunk_id 时，才兜底去 Milvus 按 chunk_id 直接捞命中片段。
     fallback_chunk = _fetch_preview_chunk_from_milvus(
         chunk_id=selected_chunk_id,
         document_id=str(document.get('document_id') or ''),
@@ -467,6 +474,10 @@ def _prepare_preview_document(
     )
     preview_document['chunks_snapshot'] = [fallback_chunk] if fallback_chunk else []
     return preview_document
+
+
+def _snapshot_has_chunk_ids(chunks: list[dict[str, object]]) -> bool:
+    return any(str(chunk.get('chunk_id') or '').strip() for chunk in chunks)
 
 
 def _fetch_preview_chunk_from_milvus(
@@ -479,7 +490,7 @@ def _fetch_preview_chunk_from_milvus(
     rows = fetch_chunks_by_chunk_ids(
         chunks_collection,
         [lookup_id],
-        output_fields=['chunk_id', 'document_id', 'content', 'title', 'parent_title'],
+        output_fields=CHUNK_PREVIEW_OUTPUT_FIELDS,
     )
     for row in rows:
         row_document_id = str(row.get('document_id') or '')

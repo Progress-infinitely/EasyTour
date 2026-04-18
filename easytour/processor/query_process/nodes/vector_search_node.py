@@ -8,6 +8,7 @@ from easytour.processor.query_process.nodes.common import (
     normalize_chunk_hits,
 )
 from easytour.processor.query_process.state import QueryGraphState
+from easytour.schema.chunk_schema import CHUNK_SEARCH_OUTPUT_FIELDS
 from easytour.utils.providers.base import TEXT_TYPE_QUERY
 from easytour.utils.providers.provider_factory import get_embedding_provider
 
@@ -36,19 +37,7 @@ class VectorSearchNode(BaseNode):
             dense_vector=record.dense_vector,
             sparse_vector=record.sparse_vector,
             limit=self.config.embedding_search_limit,
-            output_fields=[
-                'chunk_id',
-                'content',
-                'title',
-                'parent_title',
-                'file_title',
-                'item_name',
-                'primary_item_name',
-                'entity_names',
-                'document_id',
-                'source_label_display',
-                'city',
-            ],
+            output_fields=CHUNK_SEARCH_OUTPUT_FIELDS,
             expr=expr,
         )
         embedding_chunks = normalize_chunk_hits(hits, retrieval_source='vector_search')

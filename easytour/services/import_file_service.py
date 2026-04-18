@@ -17,12 +17,14 @@ from easytour.processor.import_process.main_graph import create_import_graph
 from easytour.schema.upload_schema import UploadForceMode, UploadOverride, UploadResponse, UploadStatus
 from easytour.services.document_service import (
     DocumentService,
-    DocumentServiceError,
     RequiresReindexError,
 )
+from easytour.services.item_name_index_service import ItemNameIndexService
 from easytour.services.task_service import TaskService
 from easytour.utils.client.storage_clients import StorageClients
 from easytour.utils.hashing import build_document_id, sha256_upload_file
+from easytour.utils.item_name_util import resolve_document_item_name
+from easytour.utils.title_util import resolve_document_title, resolve_file_title, resolve_source_label_display
 from easytour.utils.region_normalizer import infer_region
 from easytour.utils.task_util import (
     TASK_STATUS_COMPLETED,
@@ -55,6 +57,7 @@ class ImportFileService:
     def __init__(self, task_service: TaskService, document_service: DocumentService):
         self._task_service = task_service
         self._document_service = document_service
+        self._item_name_index_service = ItemNameIndexService()
         self._import_app = create_import_graph()
 
     def get_date_dir(self) -> str:
@@ -137,6 +140,7 @@ class ImportFileService:
             if context.mode == 'metadata_only':
                 self._task_service.mark_node_running(context.task_id, 'metadata_only_apply')
                 document = self._document_service.apply_metadata_only(context.document_id, context.overrides)
+                self._sync_item_name_index(document)
                 self._task_service.mark_node_done(context.task_id, 'metadata_only_apply')
                 self._record_document_result(context.task_id, document)
                 self._task_service.update_task_status(context.task_id, TASK_STATUS_COMPLETED)
@@ -150,6 +154,7 @@ class ImportFileService:
             else:
                 document = self._document_service.save_import_result(final_state)
 
+            self._sync_item_name_index(document)
             self._record_document_result(context.task_id, document, final_state=final_state)
             self._task_service.update_task_status(context.task_id, TASK_STATUS_COMPLETED)
             return final_state
@@ -184,19 +189,35 @@ class ImportFileService:
         return final_state
 
     def _build_initial_state(self, context: UploadRunContext) -> dict[str, Any]:
-        region = infer_region(context.overrides.get('region'), context.file_name)
-        content_type = self._infer_content_type(context.file_name, context.overrides.get('content_type'))
-        item_name = Path(context.file_name).stem
+        file_title = resolve_file_title({}, fallback_path=context.file_name or context.import_file_path)
+        region = infer_region(context.overrides.get('region'), file_title)
+        content_type = self._infer_content_type(file_title, context.overrides.get('content_type'))
+        item_name = Path(file_title).stem
         created_at = int(datetime.now().timestamp() * 1000)
         source_uri_internal = str(context.overrides.get('source_path') or context.import_file_path)
-        source_label_display = str(context.overrides.get('source_label_display') or context.file_name)
-        document_title = str(context.overrides.get('document_title') or Path(context.file_name).stem)
+        document_title = resolve_document_title(
+            {
+                'document_title': context.overrides.get('document_title') or '',
+                'file_title': file_title,
+                'item_name': item_name,
+            },
+            fallback_file_title=file_title,
+        )
+        source_label_display = resolve_source_label_display(
+            {
+                'source_label_display': context.overrides.get('source_label_display') or '',
+                'document_title': document_title,
+                'file_title': file_title,
+            },
+            fallback_file_title=file_title,
+        )
         main_entities = [{'item_name': item_name, 'item_type': content_type or 'generic', 'aliases': []}]
 
         return {
             'task_id': context.task_id,
             'file_dir': context.file_dir,
             'import_file_path': context.import_file_path,
+            'file_title': file_title,
             'file_hash': context.file_hash,
             'document_id': context.document_id,
             'ingest_batch_id': context.ingest_batch_id,
@@ -226,21 +247,18 @@ class ImportFileService:
     ) -> None:
         set_task_result(task_id, 'document_id', str(document.get('document_id') or ''))
         set_task_result(task_id, 'file_title', str(document.get('file_title') or ''))
-        set_task_result(task_id, 'item_name', self._pick_primary_item_name(document, final_state))
+        set_task_result(task_id, 'document_title', str(document.get('document_title') or ''))
+        set_task_result(task_id, 'item_name', self._pick_document_item_name(document, final_state))
         set_task_result(task_id, 'chunk_count', int(document.get('chunk_count') or 0))
         set_task_result(task_id, 'region_path', str(document.get('region_path') or ''))
         set_task_result(task_id, 'doc_main_entities', list(document.get('main_entities') or []))
 
-    def _pick_primary_item_name(self, document: dict[str, Any], final_state: dict[str, Any] | None) -> str:
+    def _pick_document_item_name(self, document: dict[str, Any], final_state: dict[str, Any] | None) -> str:
         if final_state:
-            item_name = str(final_state.get('item_name') or '').strip()
+            item_name = resolve_document_item_name(final_state)
             if item_name:
                 return item_name
-        for entity in document.get('main_entities') or []:
-            item_name = str((entity or {}).get('item_name') or '').strip()
-            if item_name:
-                return item_name
-        return ''
+        return resolve_document_item_name(document)
 
     def _save_upload_file(self, file: UploadFile, file_dir: str) -> str:
         os.makedirs(file_dir, exist_ok=True)
@@ -291,3 +309,10 @@ class ImportFileService:
 
     def _ensure_task_id(self, file_dir: str) -> str:
         return os.path.basename(file_dir)
+
+    def _sync_item_name_index(self, document: dict[str, Any]) -> None:
+        try:
+            self._item_name_index_service.sync_document_entities(document)
+        except Exception as exc:
+            # [修改] 主体名索引属于增强能力，失败时先告警，不阻断文档主导入链。
+            logger.warning('sync item_name_collection failed: %s', exc)

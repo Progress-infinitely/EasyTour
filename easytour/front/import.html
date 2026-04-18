@@ -457,7 +457,7 @@
                     </div>
 
                     <div class="mt-4 grid gap-3 lg:grid-cols-[1fr_1fr_1fr_auto]">
-                        <input id="ov_document_title" class="h-12 rounded-2xl border border-outline-variant/20 bg-surface-container-low px-4 text-sm text-on-surface outline-none transition focus:border-primary-fixed-dim focus:bg-white focus:ring-4 focus:ring-primary-fixed/40" placeholder="景区 / 景点名称，例如：三亚天涯海角">
+                        <input id="ov_document_title" class="h-12 rounded-2xl border border-outline-variant/20 bg-surface-container-low px-4 text-sm text-on-surface outline-none transition focus:border-primary-fixed-dim focus:bg-white focus:ring-4 focus:ring-primary-fixed/40" placeholder="文档标题，例如：三亚天涯海角导览">
                         <input id="ov_region" class="h-12 rounded-2xl border border-outline-variant/20 bg-surface-container-low px-4 text-sm text-on-surface outline-none transition focus:border-primary-fixed-dim focus:bg-white focus:ring-4 focus:ring-primary-fixed/40" placeholder="地区 / 城市，例如：海南 / 三亚">
                         <input id="ov_source_label_display" class="h-12 rounded-2xl border border-outline-variant/20 bg-surface-container-low px-4 text-sm text-on-surface outline-none transition focus:border-primary-fixed-dim focus:bg-white focus:ring-4 focus:ring-primary-fixed/40" placeholder="来源标签，例如：三亚文旅局 2026 指南">
                         <div class="flex gap-2 lg:justify-end">
@@ -717,7 +717,7 @@
 
     function buildStatusSummary(data) {
         if (data.status === "completed") {
-            const headline = data.item_name || data.file_title || "导入完成";
+            const headline = data.document_title || data.item_name || data.file_title || "导入完成";
             const chunks = data.chunk_count ? ` · ${data.chunk_count} 个切片` : "";
             return `${headline}${chunks}`;
         }

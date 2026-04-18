@@ -75,7 +75,6 @@ class QueryConfig:
     # [修改] 默认切到 EasyTour 独立 collection，避免和旧项目复用同一套 Milvus 数据。
     chunks_collection: str = field(default_factory=lambda: os.getenv('CHUNKS_COLLECTION', 'easytour_chunks_v1'))
     item_name_collection: str = field(default_factory=lambda: os.getenv('ITEM_NAME_COLLECTION', 'easytour_item_names_v1'))
-    entity_name_collection: str = field(default_factory=lambda: os.getenv('ENTITY_NAME_COLLECTION', 'easytour_entity_names_v1'))
 
     mcp_dashscope_base_url: str = field(default_factory=lambda: os.getenv('MCP_DASHSCOPE_BASE_URL', ''))
     query_time_budget_ms: int = field(default_factory=lambda: int(os.getenv('QUERY_TIME_BUDGET_MS', '10000')))

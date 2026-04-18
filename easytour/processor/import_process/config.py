@@ -64,8 +64,6 @@ class ImportConfig:
     img_content_length: int = 200
     min_content_length: int = 500
     overlap_sentences: int = 1
-    item_name_chunk_k: int = 3
-    item_name_chunk_size: int = 2500
 
     # 允许当作图片处理的后缀名集合。
     image_extensions: Set[str] = field(
@@ -103,7 +101,6 @@ class ImportConfig:
     # [修改] 和查询链默认 collection 对齐，并切到 EasyTour 独立命名，避免继续写进旧项目表。
     chunks_collection: str = field(default_factory=lambda: os.getenv('CHUNKS_COLLECTION', 'easytour_chunks_v1'))
     item_name_collection: str = field(default_factory=lambda: os.getenv('ITEM_NAME_COLLECTION', 'easytour_item_names_v1'))
-    entity_name_collection: str = field(default_factory=lambda: os.getenv('ENTITY_NAME_COLLECTION', 'easytour_entity_names_v1'))
 
     minio_endpoint: str = field(default_factory=lambda: os.getenv('MINIO_ENDPOINT', ''))
     minio_access_key: str = field(default_factory=lambda: os.getenv('MINIO_ACCESS_KEY', ''))
@@ -118,8 +115,8 @@ class ImportConfig:
     # - EMBEDDING_PROVIDER
     #
     # 这组参数主要影响：
-    # - `bge_embedding_chunks_node.py`
-    # - `item_name_recognition_node.py`
+    # - 当前导入主链的 chunk 向量化
+    # - 主体名索引写入 item_name_collection
     embedding_dim: int = field(default_factory=lambda: int(os.getenv('EMBEDDING_DIM', '1024')))
     embedding_model: str = field(default_factory=lambda: os.getenv('EMBEDDING_MODEL', 'text-embedding-v4'))
     embedding_provider: str = field(default_factory=lambda: os.getenv('EMBEDDING_PROVIDER', 'dashscope'))
@@ -143,7 +140,15 @@ class ImportConfig:
 
     # ===== 其他工程参数 =====
     # 目前主要给图片摘要等场景做简单限流使用。
-    requests_per_minute: int = 15
+    # REQUESTS_PER_MINUTE：每分钟最大请求数，会和 VLM_CONCURRENCY 共同限制 VLM 调用速率。
+    requests_per_minute: int = field(default_factory=lambda: int(os.getenv('REQUESTS_PER_MINUTE', '15')))
+
+    # ===== 并发参数 =====
+    # 控制导入链中 IO 密集型节点的并行度。
+    # - VLM_CONCURRENCY：图片摘要节点同时在途的 VLM 请求数，仍受 requests_per_minute 共同约束。
+    # - CHUNK_EXTRACT_CONCURRENCY：chunk 级抽取节点批与批之间的并行度（批内仍合并请求）。
+    vlm_concurrency: int = field(default_factory=lambda: int(os.getenv('VLM_CONCURRENCY', '5')))
+    chunk_extract_concurrency: int = field(default_factory=lambda: int(os.getenv('CHUNK_EXTRACT_CONCURRENCY', '3')))
 
     @classmethod
     def from_env(cls) -> 'ImportConfig':

@@ -4,6 +4,7 @@ from typing import Any
 
 from easytour.processor.query_process.base import BaseNode
 from easytour.processor.query_process.state import QueryGraphState
+from easytour.utils.item_name_util import resolve_chunk_display_item_name
 
 
 class RrfNode(BaseNode):
@@ -44,6 +45,6 @@ class RrfNode(BaseNode):
         if chunk_id not in (None, ''):
             return f'chunk:{chunk_id}'
         content = str(doc.get('content') or doc.get('snippet') or '').strip()
-        item_name = str(doc.get('item_name', '')).strip()
+        item_name = resolve_chunk_display_item_name(doc)
         url = str(doc.get('url', '')).strip()
         return f'text:{item_name}:{url}:{content}'

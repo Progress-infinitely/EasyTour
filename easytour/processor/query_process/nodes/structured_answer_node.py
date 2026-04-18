@@ -7,6 +7,8 @@ from easytour.processor.query_process.state import QueryGraphState
 from easytour.prompts.query.query_prompt import ANSWER_PROMPT, get_intent_instruction
 from easytour.schema.meta_schema import AnswerIntent
 from easytour.services.trace_service import TraceService
+from easytour.utils.item_name_util import resolve_chunk_display_item_name
+from easytour.utils.title_util import resolve_chunk_title, resolve_source_label_display
 from easytour.utils.providers.provider_factory import get_llm_provider
 from easytour.utils.sse_util import SSEEvent, push_sse_event
 
@@ -161,7 +163,7 @@ class StructuredAnswerNode(BaseNode):
             seen_names: set[str] = set()
             recommendations: list[dict[str, Any]] = []
             for doc in docs:
-                name = str(doc.get('primary_item_name') or doc.get('item_name') or doc.get('title') or '').strip()
+                name = resolve_chunk_display_item_name(doc)
                 if not name or name in seen_names:
                     continue
                 seen_names.add(name)
@@ -227,11 +229,14 @@ class StructuredAnswerNode(BaseNode):
         for doc in docs:
             # [修改] 引用补充来源类型/网页链接/chunk_id，前端才能区分网页跳转和本地命中片段预览。
             source_type = 'web_search' if str(doc.get('retrieval_source') or '').strip() == 'web_search' else 'document'
+            display_item_name = '' if source_type == 'web_search' else resolve_chunk_display_item_name(doc)
             citation = {
-                'source_label_display': str(
-                    doc.get('source_label_display') or doc.get('file_title') or doc.get('title') or ''
+                'source_label_display': (
+                    str(doc.get('title') or '').strip()
+                    if source_type == 'web_search'
+                    else resolve_source_label_display(doc)
                 ),
-                'item_name': str(doc.get('item_name') or doc.get('primary_item_name') or ''),
+                'item_name': display_item_name,
                 'city': str(doc.get('city') or ''),
                 'document_id': str(doc.get('document_id') or ''),
                 'source_type': source_type,
@@ -253,8 +258,8 @@ class StructuredAnswerNode(BaseNode):
             content = str(doc.get('content') or doc.get('snippet') or '').strip()
             if not content:
                 continue
-            title = str(doc.get('title') or doc.get('file_title') or '').strip()
-            item_name = str(doc.get('item_name') or doc.get('primary_item_name') or '').strip()
+            title = resolve_chunk_title(doc, fallback_file_title=str(doc.get('file_title') or ''))
+            item_name = '' if str(doc.get('retrieval_source') or '').strip() == 'web_search' else resolve_chunk_display_item_name(doc)
             header_parts = [f'[{index}]']
             if item_name:
                 header_parts.append(f'item={item_name}')

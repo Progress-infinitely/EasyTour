@@ -106,6 +106,13 @@ def clear_history(session_id: str) -> int:
     return deleted_count
 
 
+def _normalize_history_record(record: dict[str, Any]) -> dict[str, Any]:
+    normalized = dict(record)
+    if '_id' in normalized:
+        normalized['_id'] = str(normalized.get('_id') or '')
+    return normalized
+
+
 def save_chat_message(
     session_id: str,
     role: str,
@@ -200,7 +207,7 @@ def get_recent_messages(session_id: str, limit: int = 10) -> list[dict[str, Any]
                 .sort('ts', ASCENDING)
                 .limit(limit)
             )
-            return list(cursor)
+            return [_normalize_history_record(record) for record in cursor]
         except Exception as exc:
             logger.warning('Mongo get_recent_messages failed, fallback to memory: %s', exc)
 
@@ -208,4 +215,4 @@ def get_recent_messages(session_id: str, limit: int = 10) -> list[dict[str, Any]
     records.sort(key=lambda item: float(item.get('ts') or 0))
     if limit > 0:
         records = records[-limit:]
-    return [dict(record) for record in records]
+    return [_normalize_history_record(record) for record in records]

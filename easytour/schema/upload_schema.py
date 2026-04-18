@@ -23,7 +23,7 @@ class UploadOverride(BaseModel):
     content_type: str | None = Field(default=None, description='覆盖内容类型。')
     region: str | None = Field(default=None, description='覆盖地区，自由文本输入。')
     source_path: str | None = Field(default=None, description='覆盖来源路径或网页 URL。')
-    document_title: str | None = Field(default=None, description='覆盖文档标题。')
+    document_title: str | None = Field(default=None, description='覆盖文档展示标题。')
     source_label_display: str | None = Field(default=None, description='覆盖前端展示来源标签。')
 
 

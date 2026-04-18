@@ -5,16 +5,12 @@ from typing import Any, Mapping, Sequence
 
 from pymilvus import AnnSearchRequest, WeightedRanker
 
+from easytour.utils.item_name_util import (
+    resolve_chunk_item_name,
+    resolve_chunk_primary_item_name,
+)
+from easytour.utils.title_util import resolve_source_label_display
 from easytour.utils.client.storage_clients import StorageClients
-
-
-def build_item_name_expr(item_names: Sequence[str]) -> str:
-    normalized_names = [str(name).strip() for name in item_names if str(name).strip()]
-    if not normalized_names:
-        return ''
-    quoted = ', '.join(json_quote(name) for name in normalized_names)
-    return f'item_name in [{quoted}]'
-
 
 def build_milvus_expr(
     retrieval_type: str,
@@ -107,8 +103,11 @@ def normalize_chunk_hits(hits: Sequence[dict[str, Any]], *, retrieval_source: st
         score = hit.get('distance')
         if score is None:
             score = hit.get('score')
-        primary_item_name = str(entity.get('primary_item_name') or '').strip()
-        item_name = str(entity.get('item_name') or primary_item_name).strip()
+        item_name = resolve_chunk_item_name(entity)
+        primary_item_name = resolve_chunk_primary_item_name(
+            entity,
+            default_document_item_name=item_name,
+        )
         normalized_docs.append(
             {
                 'chunk_id': entity.get('chunk_id', hit.get('id')),
@@ -116,6 +115,7 @@ def normalize_chunk_hits(hits: Sequence[dict[str, Any]], *, retrieval_source: st
                 'title': entity.get('title', ''),
                 'parent_title': entity.get('parent_title', ''),
                 'file_title': entity.get('file_title', ''),
+                'document_title': entity.get('document_title', ''),
                 'item_name': item_name,
                 'primary_item_name': primary_item_name,
                 'entity_names': _parse_json_list(entity.get('entity_names')),
@@ -123,7 +123,7 @@ def normalize_chunk_hits(hits: Sequence[dict[str, Any]], *, retrieval_source: st
                 'retrieval_source': retrieval_source,
                 'source': 'milvus',
                 'document_id': str(entity.get('document_id') or ''),
-                'source_label_display': str(entity.get('source_label_display') or entity.get('file_title') or ''),
+                'source_label_display': resolve_source_label_display(entity),
                 'city': str(entity.get('city') or ''),
             }
         )

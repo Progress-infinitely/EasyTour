@@ -10,6 +10,8 @@ from easytour.processor.import_process.base import BaseNode
 from easytour.processor.import_process.state import ImportGraphState
 from easytour.prompts.upload.import_prompt import DOC_LEVEL_EXTRACT_SYSTEM as _SYSTEM, DOC_LEVEL_EXTRACT_USER_TEMPLATE as _USER_TEMPLATE
 from easytour.schema.meta_schema import ContentType
+from easytour.utils.item_name_util import resolve_document_item_name
+from easytour.utils.title_util import resolve_document_title
 from easytour.utils.providers.provider_factory import get_llm_provider
 from easytour.utils.region_normalizer import RegionInfo, normalize_region
 
@@ -65,13 +67,20 @@ class DocLevelExtractNode(BaseNode):
             content_type = 'culture'
 
         region = normalize_region(file_title)
-        item_name = str(state.get('item_name') or file_title or '').strip()
+        item_name = str(resolve_document_item_name(state) or file_title).strip()
         return {
             'content_type': content_type,
             'province': region.province,
             'city': region.city,
             'region_path': region.region_path,
-            'document_title': file_title,
+            'document_title': resolve_document_title(
+                {
+                    'document_title': state.get('document_title') or '',
+                    'file_title': file_title,
+                    'item_name': item_name,
+                },
+                fallback_file_title=file_title,
+            ),
             'main_entities': [{'item_name': item_name, 'item_type': content_type}] if item_name else [],
         }
 
@@ -82,7 +91,13 @@ class DocLevelExtractNode(BaseNode):
             'doc_province': region.province,
             'doc_city': region.city,
             'doc_region_path': region.region_path,
-            'document_title': str(state.get('override_document_title') or state.get('document_title') or ''),
+            'document_title': resolve_document_title(
+                {
+                    'document_title': state.get('override_document_title') or state.get('document_title') or '',
+                    'file_title': state.get('file_title') or '',
+                },
+                fallback_file_title=str(state.get('file_title') or ''),
+            ),
             'doc_main_entities': list(state.get('doc_main_entities') or []),
         }
 
@@ -110,7 +125,13 @@ class DocLevelExtractNode(BaseNode):
                     region_path=region_path or '/'.join(p for p in (province, city) if p),
                 )
 
-        document_title = override_document_title or str(extracted.get('document_title') or state.get('file_title') or '')
+        document_title = resolve_document_title(
+            {
+                'document_title': override_document_title or extracted.get('document_title') or state.get('document_title') or '',
+                'file_title': state.get('file_title') or '',
+            },
+            fallback_file_title=str(state.get('file_title') or ''),
+        )
 
         raw_entities = extracted.get('main_entities') or []
         main_entities: list[dict[str, Any]] = []
@@ -126,7 +147,9 @@ class DocLevelExtractNode(BaseNode):
                 })
 
         if not main_entities:
-            item_name = str(state.get('item_name') or document_title or '').strip()
+            fallback_state = dict(state)
+            fallback_state['document_title'] = document_title
+            item_name = resolve_document_item_name(fallback_state)
             if item_name:
                 main_entities = [{'item_name': item_name, 'item_type': content_type, 'aliases': []}]
 

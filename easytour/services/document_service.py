@@ -9,7 +9,19 @@ from typing import Any
 from dotenv import load_dotenv
 
 from easytour.processor.import_process.config import get_config
+from easytour.schema.chunk_schema import CHUNK_SCALAR_FIELDS
 from easytour.utils.client.storage_clients import StorageClients
+from easytour.utils.item_name_util import (
+    collect_entity_item_names,
+    resolve_chunk_item_name,
+    resolve_chunk_primary_item_name,
+    resolve_document_item_name,
+)
+from easytour.utils.title_util import (
+    resolve_document_title,
+    resolve_file_title,
+    resolve_source_label_display,
+)
 from easytour.utils.region_normalizer import RegionInfo, infer_region
 
 load_dotenv()
@@ -210,8 +222,7 @@ class DocumentService:
     def list_items(self) -> list[dict[str, str]]:
         values: set[str] = set()
         for document in self.list_documents():
-            for entity in document.get('main_entities') or []:
-                item_name = str((entity or {}).get('item_name') or '').strip()
+            for item_name in collect_entity_item_names(document, field_names=('main_entities',)):
                 if item_name:
                     values.add(item_name)
         return [{'label': item_name, 'value': item_name} for item_name in sorted(values)]
@@ -225,6 +236,12 @@ class DocumentService:
 
     def _build_document_record(self, state: dict[str, Any]) -> dict[str, Any]:
         region = self._resolve_region_from_state(state)
+        file_title = resolve_file_title(state)
+        document_title = resolve_document_title(state, fallback_file_title=file_title)
+        source_label_display = resolve_source_label_display(
+            state,
+            fallback_file_title=file_title,
+        )
         chunks_snapshot = copy.deepcopy(
             state.get('pending_chunks_snapshot')
             or state.get('chunks_snapshot')
@@ -235,15 +252,15 @@ class DocumentService:
 
         main_entities = state.get('doc_main_entities') or []
         if not main_entities:
-            item_name = str(state.get('item_name') or '').strip()
+            item_name = resolve_document_item_name(state)
             if item_name:
                 main_entities = [{'item_name': item_name, 'item_type': state.get('doc_content_type') or 'generic', 'aliases': []}]
 
         return {
             'document_id': str(state.get('document_id') or ''),
             'file_hash': str(state.get('file_hash') or ''),
-            'file_title': str(state.get('file_title') or ''),
-            'document_title': str(state.get('document_title') or state.get('file_title') or ''),
+            'file_title': file_title,
+            'document_title': document_title,
             'content_type': str(state.get('doc_content_type') or state.get('override_content_type') or 'attraction'),
             'province': region.province,
             'city': region.city,
@@ -253,7 +270,7 @@ class DocumentService:
             'last_ingest_batch_id': str(state.get('ingest_batch_id') or ''),
             'last_ingest_at': int(state.get('created_at') or _now_ms()),
             'source_uri_internal': str(state.get('source_uri_internal') or ''),
-            'source_label_display': str(state.get('source_label_display') or state.get('file_title') or ''),
+            'source_label_display': source_label_display,
             'chunks_snapshot': normalized_chunks,
             'rollback_snapshot': None,
             'pending_chunks_snapshot': None,
@@ -271,17 +288,42 @@ class DocumentService:
 
     def _apply_chunk_document_fields(self, chunk: dict[str, Any], source: dict[str, Any]) -> dict[str, Any]:
         merged = copy.deepcopy(chunk)
+        document_item_name = resolve_document_item_name(source)
+        # [修改] ingest_batch_id / source_uri_internal 是文档级元数据，不再向每个 chunk 冗余复制。
+        merged.pop('ingest_batch_id', None)
+        merged.pop('source_uri_internal', None)
+        merged['file_title'] = resolve_file_title(
+            {
+                'file_title': source.get('file_title') or merged.get('file_title') or '',
+            }
+        )
         merged['document_id'] = str(source.get('document_id') or merged.get('document_id') or '')
         merged['file_hash'] = str(source.get('file_hash') or merged.get('file_hash') or '')
-        merged['ingest_batch_id'] = str(source.get('ingest_batch_id') or merged.get('ingest_batch_id') or '')
         merged['content_type'] = str(source.get('doc_content_type') or source.get('content_type') or merged.get('content_type') or 'attraction')
-        merged['document_title'] = str(source.get('document_title') or merged.get('document_title') or merged.get('file_title') or '')
+        merged['document_title'] = resolve_document_title(
+            {
+                'document_title': source.get('document_title') or merged.get('document_title') or '',
+                'file_title': merged.get('file_title') or '',
+                'item_name': document_item_name,
+            },
+            fallback_file_title=str(merged.get('file_title') or ''),
+        )
         merged['province'] = str(source.get('doc_province') or source.get('province') or merged.get('province') or '')
         merged['city'] = str(source.get('doc_city') or source.get('city') or merged.get('city') or '')
         merged['region_path'] = str(source.get('doc_region_path') or source.get('region_path') or merged.get('region_path') or '')
-        merged['source_uri_internal'] = str(source.get('source_uri_internal') or merged.get('source_uri_internal') or '')
-        merged['source_label_display'] = str(source.get('source_label_display') or merged.get('source_label_display') or merged.get('file_title') or '')
-        merged['primary_item_name'] = str(merged.get('primary_item_name') or merged.get('item_name') or source.get('item_name') or '')
+        merged['source_label_display'] = resolve_source_label_display(
+            {
+                'source_label_display': source.get('source_label_display') or merged.get('source_label_display') or '',
+                'document_title': merged.get('document_title') or '',
+                'file_title': merged.get('file_title') or '',
+            },
+            fallback_file_title=str(merged.get('file_title') or ''),
+        )
+        merged['item_name'] = resolve_chunk_item_name(merged, default_document_item_name=document_item_name)
+        merged['primary_item_name'] = resolve_chunk_primary_item_name(
+            merged,
+            default_document_item_name=document_item_name,
+        )
         merged['entity_names'] = list(merged.get('entity_names') or ([merged['primary_item_name']] if merged['primary_item_name'] else []))
         return merged
 
@@ -293,7 +335,7 @@ class DocumentService:
         if not rows:
             return
         client = StorageClients.get_milvus_client()
-        # [修改] 当前主链绕开了旧的 import_milvus_node，这里兜底确保 chunks collection 存在。
+        # [修改] chunks collection 由当前主导入链在保存文档时兜底创建，避免首次写入时缺表。
         self._ensure_chunks_collection(client, rows)
         inserted = client.insert(
             collection_name=self._chunks_collection,
@@ -323,25 +365,8 @@ class DocumentService:
         schema.add_field(field_name='dense_vector', datatype=DataType.FLOAT_VECTOR, dim=dim)
         schema.add_field(field_name='sparse_vector', datatype=DataType.SPARSE_FLOAT_VECTOR)
 
-        scalar_fields: tuple[tuple[str, int], ...] = (
-            ('content', 65535),
-            ('title', 1024),
-            ('parent_title', 1024),
-            ('file_title', 1024),
-            ('item_name', 1024),
-            ('primary_item_name', 1024),
-            ('document_id', 64),
-            ('document_title', 1024),
-            ('content_type', 64),
-            ('province', 128),
-            ('city', 128),
-            ('region_path', 256),
-            ('ingest_batch_id', 64),
-            ('source_uri_internal', 2048),
-            ('source_label_display', 1024),
-        )
-        for field_name, max_length in scalar_fields:
-            schema.add_field(field_name=field_name, datatype=DataType.VARCHAR, max_length=max_length)
+        for spec in CHUNK_SCALAR_FIELDS:
+            schema.add_field(field_name=spec.field_name, datatype=DataType.VARCHAR, max_length=spec.max_length)
 
         index_params = client.prepare_index_params()
         index_params.add_index(
@@ -365,7 +390,7 @@ class DocumentService:
     def _serialize_row_for_milvus(self, row: dict[str, Any]) -> dict[str, Any]:
         serialized: dict[str, Any] = {}
         for key, value in row.items():
-            if key == 'chunk_id':
+            if key in {'chunk_id', 'ingest_batch_id', 'source_uri_internal'}:
                 continue
             # [修改] Milvus 的向量字段必须保持原生 list/dict，不能统一转成 JSON 字符串。
             if key in {'dense_vector', 'sparse_vector'}:

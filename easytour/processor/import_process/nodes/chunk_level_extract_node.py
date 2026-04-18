@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import json
+from concurrent.futures import ThreadPoolExecutor
 from json import JSONDecodeError
 from typing import Any
 
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from easytour.processor.import_process.base import BaseNode
+from easytour.processor.import_process.config import get_config
 from easytour.processor.import_process.state import ImportGraphState
 from easytour.prompts.upload.import_prompt import (
     CHUNK_LEVEL_EXTRACT_SYSTEM as _SYSTEM,
@@ -14,6 +16,7 @@ from easytour.prompts.upload.import_prompt import (
     CHUNK_LEVEL_EXTRA_FIELDS as _EXTRA_FIELDS,
     CHUNK_LEVEL_EXTRACT_USER_TEMPLATE as _USER_TEMPLATE,
 )
+from easytour.utils.item_name_util import resolve_chunk_primary_item_name
 from easytour.utils.providers.provider_factory import get_llm_provider
 
 _BATCH_SIZE = 5
@@ -39,9 +42,28 @@ class ChunkLevelExtractNode(BaseNode):
 
     def _enrich_all(self, chunks: list[dict[str, Any]], content_type: str, known_names: set[str]) -> list[dict[str, Any]]:
         result = list(chunks)
-        for batch_start in range(0, len(chunks), _BATCH_SIZE):
-            batch = chunks[batch_start:batch_start + _BATCH_SIZE]
-            extracted_list = self._extract_batch(batch, content_type)
+        batches = [
+            (batch_start, chunks[batch_start:batch_start + _BATCH_SIZE])
+            for batch_start in range(0, len(chunks), _BATCH_SIZE)
+        ]
+        # [修改] 批与批之间并行调用 LLM，提高吞吐；批内仍保留 _BATCH_SIZE 个 chunk 的合并请求。
+        concurrency = max(1, min(get_config().chunk_extract_concurrency, len(batches) or 1))
+
+        def run(indexed_batch: tuple[int, list[dict[str, Any]]]) -> tuple[int, list[dict[str, Any]], list[dict[str, Any]]]:
+            batch_start, batch = indexed_batch
+            extracted = self._extract_batch(batch, content_type)
+            return batch_start, batch, extracted
+
+        if concurrency == 1:
+            iter_results = (run(item) for item in batches)
+        else:
+            pool = ThreadPoolExecutor(max_workers=concurrency)
+            try:
+                iter_results = list(pool.map(run, batches))
+            finally:
+                pool.shutdown(wait=True)
+
+        for batch_start, batch, extracted_list in iter_results:
             for offset, (chunk, fields) in enumerate(zip(batch, extracted_list)):
                 merged = dict(chunk)
                 if fields:
@@ -85,7 +107,7 @@ class ChunkLevelExtractNode(BaseNode):
 
 def _build_entity_names(chunk: dict[str, Any], known_names: set[str]) -> list[str]:
     names: list[str] = []
-    primary = str(chunk.get('primary_item_name') or chunk.get('item_name') or '').strip()
+    primary = resolve_chunk_primary_item_name(chunk)
     if primary:
         names.append(primary)
 

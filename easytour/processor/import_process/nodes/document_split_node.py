@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import re
+from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -10,7 +11,10 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from easytour.processor.import_process.base import BaseNode, setup_logging
 from easytour.processor.import_process.exceptions import StateFieldError, ValidationError
 from easytour.processor.import_process.state import ImportGraphState
+from easytour.utils.hashing import build_chunk_hash
+from easytour.utils.item_name_util import resolve_document_item_name
 from easytour.utils.markdown_util import MarkdownTableLinearizer
+from easytour.utils.title_util import resolve_document_title
 
 
 class DocumentSplitNode(BaseNode):
@@ -21,17 +25,17 @@ class DocumentSplitNode(BaseNode):
     def process(self, state: ImportGraphState) -> ImportGraphState:
         """先按标题切 section，再对 section 做拆分和合并。"""
         config = self.config
-        md_content, file_title, max_content_length, min_content_length = self._validate_state(state, config)
+        md_content, file_title, document_title, item_name, max_content_length, min_content_length = self._validate_state(state, config)
 
-        sections = self._split_by_headings(md_content, file_title)
+        sections = self._split_by_headings(md_content, file_title, document_title)
         final_sections = self._split_and_merge(sections, max_content_length, min_content_length)
-        final_chunks = self._assemble_chunks(final_sections)
+        final_chunks = self._assemble_chunks(final_sections, item_name)
 
         self._back_up(final_chunks, state)
         state['chunks'] = final_chunks
         return state
 
-    def _validate_state(self, state: ImportGraphState, config) -> Tuple[str, str, int, int]:
+    def _validate_state(self, state: ImportGraphState, config) -> Tuple[str, str, str, str, int, int]:
         """读取并校验文档切分需要的输入。"""
         self.log_step('step1', '校验切分参数')
 
@@ -50,9 +54,15 @@ class DocumentSplitNode(BaseNode):
         if config.max_content_length <= config.min_content_length:
             raise ValidationError('max_content_length 必须大于 min_content_length', self.name)
 
-        return md_content, file_title, config.max_content_length, config.min_content_length
+        document_title = resolve_document_title(
+            state,
+            fallback_file_title=Path(file_title).stem or file_title,
+        )
+        item_name = str(resolve_document_item_name(state) or Path(file_title).stem or '').strip()
 
-    def _split_by_headings(self, md_content: str, file_title: str) -> List[Dict[str, Any]]:
+        return md_content, file_title, document_title, item_name, config.max_content_length, config.min_content_length
+
+    def _split_by_headings(self, md_content: str, file_title: str, document_title: str) -> List[Dict[str, Any]]:
         """按 Markdown 标题拆成基础 section。"""
         in_fence = False
         body_lines: List[str] = []
@@ -73,12 +83,12 @@ class DocumentSplitNode(BaseNode):
                     break
 
             if not parent_title:
-                parent_title = current_title or file_title
+                parent_title = current_title or document_title
 
             sections.append(
                 {
                     'body': body,
-                    'title': current_title or file_title,
+                    'title': current_title or document_title,
                     'parent_title': parent_title,
                     'file_title': file_title,
                 }
@@ -184,21 +194,30 @@ class DocumentSplitNode(BaseNode):
         final_sections.append(current_section)
         return final_sections
 
-    def _assemble_chunks(self, final_sections: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _assemble_chunks(self, final_sections: List[Dict[str, Any]], item_name: str) -> List[Dict[str, Any]]:
         """把最终 section 组装成统一 chunk 结构。"""
         final_chunks: List[Dict[str, Any]] = []
-        for section in final_sections:
+        for index, section in enumerate(final_sections):
             body = str(section.get('body') or '')
             title = str(section.get('title') or '')
             parent_title = str(section.get('parent_title') or '')
             file_title = str(section.get('file_title') or '')
+            content = f'{title}\n\n{body}'.strip() if title else body
 
             final_chunks.append(
                 {
-                    'content': f'{title}\n\n{body}',
+                    'content': content,
                     'title': title,
                     'parent_title': parent_title,
                     'file_title': file_title,
+                    'item_name': item_name,
+                    'primary_item_name': item_name,
+                    'entity_names': [item_name] if item_name else [],
+                    'chunk_index': index,
+                    'chunk_hash': build_chunk_hash(content),
+                    'tips': '',
+                    'notes': '',
+                    'suspected_new_entities': [],
                 }
             )
         self.logger.info('generated %s chunks for embedding', len(final_chunks))

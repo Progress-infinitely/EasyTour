@@ -3,8 +3,10 @@ from __future__ import annotations
 import base64
 import logging
 import re
+import threading
 import time
 from collections import deque
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Deque, Dict, List, Set, Tuple
@@ -216,12 +218,15 @@ class VLMSummarizer:
         image_list: List[ImageInfo],
         vl_model: str,
         requests_per_minute: int,
+        concurrency: int = 1,
     ) -> Dict[str, str]:
         """为所有图片批量生成摘要。"""
         self.logger.info('[step_3] generate image summaries')
 
         summaries: Dict[str, str] = {}
         request_timestamps: Deque[float] = deque()
+        # [修改] RPM 限速在多线程下共享，用锁保护时间戳读写，sleep 在锁外进行避免串行化。
+        rate_lock = threading.Lock()
 
         try:
             client = AIClients.get_vlm_client()
@@ -231,9 +236,20 @@ class VLMSummarizer:
                 summaries[img.name] = '图片描述'
             return summaries
 
-        for img in image_list:
-            self._enforce_rate_limit(request_timestamps, requests_per_minute)
-            summaries[img.name] = self._summarize_one(client, vl_model, document_title, img)
+        worker_count = max(1, min(concurrency, len(image_list)))
+
+        def task(img: ImageInfo) -> Tuple[str, str]:
+            self._acquire_rpm_slot(request_timestamps, rate_lock, requests_per_minute)
+            return img.name, self._summarize_one(client, vl_model, document_title, img)
+
+        if worker_count == 1:
+            for img in image_list:
+                name, summary = task(img)
+                summaries[name] = summary
+        else:
+            with ThreadPoolExecutor(max_workers=worker_count) as pool:
+                for name, summary in pool.map(task, image_list):
+                    summaries[name] = summary
 
         self.logger.info('generated %s image summaries', len(summaries))
         return summaries
@@ -281,22 +297,28 @@ class VLMSummarizer:
             self.logger.warning('failed to summarize image %s: %s', img.path, exc)
             return '图片描述'
 
-    def _enforce_rate_limit(self, timestamps: Deque[float], max_requests: int, window: int = 60):
-        """做一个简单的请求频率限制。"""
-        now = time.time()
-        while timestamps and now - timestamps[0] >= window:
-            timestamps.popleft()
+    def _acquire_rpm_slot(
+        self,
+        timestamps: Deque[float],
+        lock: threading.Lock,
+        max_requests: int,
+        window: int = 60,
+    ) -> None:
+        """线程安全地申请一个 RPM 限速令牌。"""
+        while True:
+            sleep_duration = 0.0
+            with lock:
+                now = time.time()
+                while timestamps and now - timestamps[0] >= window:
+                    timestamps.popleft()
+                if len(timestamps) < max_requests:
+                    timestamps.append(now)
+                    return
+                sleep_duration = window - (now - timestamps[0])
 
-        if len(timestamps) >= max_requests:
-            sleep_duration = window - (now - timestamps[0])
             if sleep_duration > 0:
                 self.logger.info('rate limited, sleep %.2f seconds', sleep_duration)
                 time.sleep(sleep_duration)
-            now = time.time()
-            while timestamps and now - timestamps[0] >= window:
-                timestamps.popleft()
-
-        timestamps.append(now)
 
 
 class ImageUploader:
@@ -406,6 +428,7 @@ class MarkDownImageNode(BaseNode):
             image_list=image_list,
             vl_model=config.vl_model,
             requests_per_minute=config.requests_per_minute,
+            concurrency=config.vlm_concurrency,
         )
 
         new_md_content = self.uploader.upload_and_replace(

@@ -12,6 +12,7 @@ from pathlib import Path
 from easytour.processor.import_process.base import BaseNode
 from easytour.processor.import_process.state import ImportGraphState
 from easytour.utils.hashing import build_document_id, sha256_file
+from easytour.utils.title_util import resolve_source_label_display
 
 
 class FileHashNode(BaseNode):
@@ -46,6 +47,13 @@ class FileHashNode(BaseNode):
         file_path_str = str(state.get('import_file_path') or '').strip()
         result['source_uri_internal'] = str(state.get('source_uri_internal') or '') or file_path_str
         file_name = Path(file_path_str).name if file_path_str else str(state.get('file_title') or '')
-        result['source_label_display'] = str(state.get('source_label_display') or '') or file_name
+        result['source_label_display'] = resolve_source_label_display(
+            {
+                'source_label_display': state.get('source_label_display') or '',
+                'document_title': state.get('document_title') or '',
+                'file_title': state.get('file_title') or file_name,
+            },
+            fallback_file_title=file_name,
+        )
 
         return result
