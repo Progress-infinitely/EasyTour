@@ -429,10 +429,10 @@
     </div>
 </header>
 
-<main class="mx-auto mt-4 grid w-full max-w-[1400px] grid-cols-1 gap-6 pb-8 lg:grid-cols-12">
-    <section class="flex min-h-0 flex-col gap-6 lg:col-span-8">
-        <!-- [修改] 对话卡片按视口高度自适应，保证输入框始终在首屏底部可见 -->
-        <div class="ambient-shadow flex h-[calc(100vh-160px)] min-h-[480px] flex-col rounded-[28px] border border-outline-variant/15 bg-surface-container-lowest p-6">
+<main class="mx-auto mt-4 grid h-[calc(100vh-140px)] w-full max-w-[1400px] grid-cols-1 gap-6 lg:grid-cols-12">
+    <!-- [修改] 左侧对话区占满 main 高度，右侧 aside 内部独立滚动，整个页面不再需要 scroll -->
+    <section class="flex min-h-0 flex-col lg:col-span-8">
+        <div class="ambient-shadow flex min-h-0 flex-1 flex-col rounded-[28px] border border-outline-variant/15 bg-surface-container-lowest p-6">
             <div class="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/15 pb-4">
                 <div class="flex items-center gap-3">
                     <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary-container text-white">
@@ -496,7 +496,7 @@
         </div>
     </section>
 
-    <aside class="flex min-h-0 flex-col gap-6 lg:col-span-4">
+    <aside class="hide-scrollbar overflow-y-auto space-y-6 lg:col-span-4 lg:pb-4">
         <!-- [修改] 首屏搜索区从左侧搬到右侧，替代原来的“检索设置”卡片 -->
         <div class="ambient-shadow relative overflow-hidden rounded-[28px] border border-outline-variant/15 bg-surface-container-lowest p-6">
             <div class="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-primary/5 blur-3xl"></div>
