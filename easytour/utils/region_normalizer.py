@@ -108,8 +108,6 @@ def normalize_region(region_text: str | None) -> RegionInfo:
     else:
         region_parts = [part for part in (province, city) if part]
     region_path = '/'.join(region_parts)
-    if not region_path:
-        region_path = text
 
     return RegionInfo(raw=text, province=province, city=city, region_path=region_path)
 
