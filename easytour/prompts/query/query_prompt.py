@@ -115,13 +115,9 @@ def get_intent_instruction(answer_intent: str) -> str:
 
 __all__ = [
     'ANSWER_PROMPT',
-    'INTENT_INSTRUCTIONS',
     'ITEM_NAME_EXTRACT_SYSTEM_PROMPT',
     'ITEM_NAME_EXTRACT_TEMPLATE',
     'RERANK_TASK_INSTRUCTION',
     'USER_HYDE_PROMPT_TEMPLATE',
     'get_intent_instruction',
 ]
-
-# 保留向后兼容别名
-INTENT_INSTRUCTIONS = _INTENT_INSTRUCTIONS

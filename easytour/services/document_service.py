@@ -3,11 +3,11 @@ from __future__ import annotations
 import copy
 import json
 import logging
-import os
 from typing import Any
 
 from dotenv import load_dotenv
 
+from easytour.core.config import get_shared_config
 from easytour.processor.import_process.config import get_config
 from easytour.schema.chunk_schema import CHUNK_SCALAR_FIELDS
 from easytour.utils.client.storage_clients import StorageClients
@@ -56,8 +56,9 @@ class DocumentMongoTool:
         if MongoClient is None:
             raise RuntimeError('pymongo is not installed')
 
-        mongo_url = os.getenv('MONGO_URL', '').strip()
-        db_name = os.getenv('MONGO_DB_NAME', '').strip()
+        config = get_shared_config()
+        mongo_url = config.mongo_url
+        db_name = config.mongo_db_name
         if not mongo_url or not db_name:
             raise ValueError('MONGO_URL or MONGO_DB_NAME is empty')
 
@@ -78,7 +79,8 @@ _memory_documents: dict[str, dict[str, Any]] = {}
 
 
 def _use_mongo() -> bool:
-    return bool(os.getenv('MONGO_URL', '').strip() and os.getenv('MONGO_DB_NAME', '').strip() and MongoClient is not None)
+    config = get_shared_config()
+    return bool(config.mongo_url and config.mongo_db_name and MongoClient is not None)
 
 
 def get_document_mongo_tool() -> DocumentMongoTool | None:

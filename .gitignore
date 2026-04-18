@@ -37,6 +37,3 @@ data/
 # [修改] 测试目录本地保留，不再上传到仓库
 tests/
 
-# Private markdown docs
-MVP改造技术方案.md
-需求说明.md

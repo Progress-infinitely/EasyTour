@@ -1,17 +1,15 @@
 from __future__ import annotations
 
 import logging
-import os
-from typing import Optional
 
 from dotenv import load_dotenv
 from pymilvus import AnnSearchRequest, MilvusClient, WeightedRanker
 
+from easytour.utils.client.storage_clients import StorageClients
+
 load_dotenv()
 
 logger = logging.getLogger(__name__)
-
-milvus_client: Optional[MilvusClient] = None
 
 
 """Milvus 轻量工具。
@@ -33,30 +31,10 @@ milvus_client: Optional[MilvusClient] = None
 """
 
 
-def get_milvus_client() -> Optional[MilvusClient]:
-    """获取全局 Milvus 客户端。
-
-    这里采用懒加载：
-    - 第一次调用时才真正创建客户端
-    - 后面直接复用
-
-    如果 `MILVUS_URL` 没配置好，或者初始化失败，会返回 `None`。
-    这是一个偏学习项目的设计：
-    让上层有机会自己决定是报错还是降级，而不是这里直接强行终止整个程序。
-    """
-    global milvus_client
-
-    if milvus_client is not None:
-        return milvus_client
-
+def get_milvus_client() -> MilvusClient | None:
+    """获取全局 Milvus 客户端。"""
     try:
-        milvus_uri = os.getenv('MILVUS_URL', '').strip()
-        if not milvus_uri:
-            logger.warning('MILVUS_URL is empty, skip Milvus client initialization')
-            return None
-        timeout_seconds = float(os.getenv('MILVUS_TIMEOUT_SECONDS', '8'))
-        milvus_client = MilvusClient(uri=milvus_uri, timeout=timeout_seconds)
-        return milvus_client
+        return StorageClients.get_milvus_client()
     except Exception as exc:
         logger.error('Failed to initialize Milvus client: %s', exc)
         return None
@@ -171,5 +149,4 @@ __all__ = [
     'execute_hybrid_search_query',
     'fetch_chunks_by_chunk_ids',
     'get_milvus_client',
-    'milvus_client',
 ]

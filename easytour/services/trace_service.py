@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import logging
-import os
 import time
 from typing import Any
 
 from dotenv import load_dotenv
+
+from easytour.core.config import get_shared_config
 
 load_dotenv()
 
@@ -27,8 +28,9 @@ def _get_mongo_col():
     if _mongo_col is not None:
         return _mongo_col
 
-    mongo_url = os.getenv('MONGO_URL', '').strip()
-    db_name = os.getenv('MONGO_DB_NAME', '').strip()
+    config = get_shared_config()
+    mongo_url = config.mongo_url
+    db_name = config.mongo_db_name
     if not mongo_url or not db_name:
         return None
 

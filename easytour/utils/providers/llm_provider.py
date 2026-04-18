@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-import os
 from typing import Any
 
 from dotenv import load_dotenv
+
+from easytour.core.config import get_shared_config
 from langchain_openai import ChatOpenAI
 
 from easytour.utils.providers.base import ProviderConfigError
@@ -22,19 +23,21 @@ class DashScopeLLMProvider:
         temperature: float = 0.0,
         response_format: bool = False,
     ) -> ChatOpenAI:
-        api_key = os.getenv('OPENAI_API_KEY') or os.getenv('DASHSCOPE_API_KEY')
+        config = get_shared_config()
+        api_key = config.provider_api_key
         if not api_key:
             raise ProviderConfigError('OPENAI_API_KEY or DASHSCOPE_API_KEY is required')
 
         resolved_model_name = (
             model_name
-            or os.getenv('ITEM_MODEL')
-            or os.getenv('LLM_DEFAULT_MODEL')
+            or config.item_model
+            or config.llm_default_model
+            or config.model
             or 'qwen-flash'
         )
         base_url = (
-            os.getenv('OPENAI_API_BASE')
-            or os.getenv('DASHSCOPE_COMPAT_BASE_URL')
+            config.openai_api_base
+            or config.dashscope_compatible_api_base
             or 'https://dashscope.aliyuncs.com/compatible-mode/v1'
         )
 

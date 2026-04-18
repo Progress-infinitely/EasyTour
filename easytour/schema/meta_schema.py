@@ -14,16 +14,6 @@ class ContentType(str, Enum):
     CULTURE = 'culture'
 
 
-class ItemType(str, Enum):
-    ATTRACTION = 'attraction'
-    ROUTE = 'route'
-    HOTEL = 'hotel'
-    FOOD = 'food'
-    TRANSPORT = 'transport'
-    CULTURE = 'culture'
-    GENERIC = 'generic'
-
-
 class AnswerIntent(str, Enum):
     LOOKUP = 'lookup'
     RECOMMENDATION = 'recommendation'

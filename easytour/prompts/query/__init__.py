@@ -1,17 +1,1 @@
-"""Query prompt exports."""
-
-from easytour.prompts.query.query_prompt import (
-    ANSWER_PROMPT,
-    ITEM_NAME_EXTRACT_SYSTEM_PROMPT,
-    ITEM_NAME_EXTRACT_TEMPLATE,
-    RERANK_TASK_INSTRUCTION,
-    USER_HYDE_PROMPT_TEMPLATE,
-)
-
-__all__ = [
-    'ANSWER_PROMPT',
-    'ITEM_NAME_EXTRACT_SYSTEM_PROMPT',
-    'ITEM_NAME_EXTRACT_TEMPLATE',
-    'RERANK_TASK_INSTRUCTION',
-    'USER_HYDE_PROMPT_TEMPLATE',
-]
+"""查询链 prompt 包。"""

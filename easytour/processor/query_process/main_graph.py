@@ -42,5 +42,3 @@ def create_query_graph() -> CompiledStateGraph:
     workflow.add_edge('structured_answer', END)
     return workflow.compile()
 
-
-query_app = create_query_graph()

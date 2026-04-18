@@ -15,10 +15,7 @@ from fastapi import UploadFile
 from easytour.core.paths import get_local_base_dir
 from easytour.processor.import_process.main_graph import create_import_graph
 from easytour.schema.upload_schema import UploadForceMode, UploadOverride, UploadResponse, UploadStatus
-from easytour.services.document_service import (
-    DocumentService,
-    RequiresReindexError,
-)
+from easytour.services.document_service import DocumentService
 from easytour.services.item_name_index_service import ItemNameIndexService
 from easytour.services.task_service import TaskService
 from easytour.utils.client.storage_clients import StorageClients
@@ -158,10 +155,6 @@ class ImportFileService:
             self._record_document_result(context.task_id, document, final_state=final_state)
             self._task_service.update_task_status(context.task_id, TASK_STATUS_COMPLETED)
             return final_state
-        except RequiresReindexError as exc:
-            self._task_service.update_task_status(context.task_id, TASK_STATUS_FAILED)
-            set_task_result(context.task_id, 'error', str(exc))
-            raise
         except Exception as exc:
             self._task_service.update_task_status(context.task_id, TASK_STATUS_FAILED)
             set_task_result(context.task_id, 'error', str(exc))
@@ -262,14 +255,15 @@ class ImportFileService:
 
     def _save_upload_file(self, file: UploadFile, file_dir: str) -> str:
         os.makedirs(file_dir, exist_ok=True)
-        self._task_service.mark_node_running(self._ensure_task_id(file_dir), 'upload_file')
+        task_id = os.path.basename(file_dir)
+        self._task_service.mark_node_running(task_id, 'upload_file')
         file_name = file.filename or f'upload-{uuid.uuid4().hex}.bin'
         import_file_path = os.path.join(file_dir, file_name)
         file.file.seek(0)
         with open(import_file_path, 'wb') as local_file:
             shutil.copyfileobj(file.file, local_file)
         file.file.seek(0)
-        self._task_service.mark_node_done(self._ensure_task_id(file_dir), 'upload_file')
+        self._task_service.mark_node_done(task_id, 'upload_file')
         return import_file_path
 
     def _save_upload_file_to_minio(self, import_file_path: str, file_name: str) -> bool:
@@ -306,9 +300,6 @@ class ImportFileService:
         if any(keyword in lowered for keyword in ('route', '路线', '行程', '一日游', '二日游', '攻略')):
             return 'route'
         return 'attraction'
-
-    def _ensure_task_id(self, file_dir: str) -> str:
-        return os.path.basename(file_dir)
 
     def _sync_item_name_index(self, document: dict[str, Any]) -> None:
         try:

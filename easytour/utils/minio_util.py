@@ -1,19 +1,18 @@
 from __future__ import annotations
 
 import logging
-import os
 from datetime import timedelta
 from urllib.parse import quote, unquote, urlsplit
 
 from dotenv import load_dotenv
 from minio import Minio
-from minio.error import S3Error
+
+from easytour.core.config import get_shared_config
+from easytour.utils.client.storage_clients import StorageClients
 
 load_dotenv()
 
 logger = logging.getLogger(__name__)
-
-_minio_client: Minio | None = None
 
 
 """MinIO 便捷工具。
@@ -35,40 +34,9 @@ _minio_client: Minio | None = None
 
 
 def get_minio_client() -> Minio | None:
-    """获取 MinIO 客户端。
-
-    如果配置不完整，这里会返回 `None`，
-    方便上层代码自己决定是报错还是降级。
-    """
-    global _minio_client
-
-    if _minio_client is not None:
-        return _minio_client
-
-    endpoint = os.getenv('MINIO_ENDPOINT', '').strip()
-    access_key = os.getenv('MINIO_ACCESS_KEY', '').strip()
-    secret_key = os.getenv('MINIO_SECRET_KEY', '').strip()
-    bucket_name = os.getenv('MINIO_BUCKET_NAME', '').strip()
-    secure = os.getenv('MINIO_SECURE', 'false').strip().lower() == 'true'
-
-    if not endpoint or not access_key or not secret_key or not bucket_name:
-        logger.warning('MinIO config is incomplete, skip initialization')
-        return None
-
+    """获取 MinIO 客户端。"""
     try:
-        client = Minio(
-            endpoint,
-            access_key=access_key,
-            secret_key=secret_key,
-            secure=secure,
-        )
-        if not client.bucket_exists(bucket_name):
-            client.make_bucket(bucket_name)
-        _minio_client = client
-        return _minio_client
-    except S3Error as exc:
-        logger.error('MinIO S3 error: %s', exc)
-        return None
+        return StorageClients.get_minio_client()
     except Exception as exc:
         logger.error('MinIO client init failed: %s', exc)
         return None
@@ -76,15 +44,16 @@ def get_minio_client() -> Minio | None:
 
 def get_minio_bucket_name() -> str:
     """读取当前 bucket 名称。"""
-    return os.getenv('MINIO_BUCKET_NAME', '').strip().strip('/')
+    return get_shared_config().minio_bucket_name.strip().strip('/')
 
 
 def get_minio_base_url() -> str:
     """拼出 MinIO 对外访问根地址。"""
-    endpoint = os.getenv('MINIO_ENDPOINT', '').strip().rstrip('/')
+    config = get_shared_config()
+    endpoint = config.minio_endpoint.rstrip('/')
     if not endpoint:
         return ''
-    secure = os.getenv('MINIO_SECURE', 'false').strip().lower() == 'true'
+    secure = config.minio_secure
     scheme = 'https' if secure else 'http'
     return f'{scheme}://{endpoint}'
 
@@ -113,7 +82,7 @@ def extract_object_name_from_minio_url(url: str) -> str:
         return ''
 
     bucket_name = get_minio_bucket_name()
-    endpoint = os.getenv('MINIO_ENDPOINT', '').strip().rstrip('/')
+    endpoint = get_shared_config().minio_endpoint.rstrip('/')
     if not bucket_name or not endpoint:
         return ''
 

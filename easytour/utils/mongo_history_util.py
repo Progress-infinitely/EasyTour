@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import logging
-import os
 import uuid
 from collections import defaultdict
 from datetime import datetime
 from typing import Any
 
 from dotenv import load_dotenv
+
+from easytour.core.config import get_shared_config
 
 load_dotenv()
 
@@ -46,8 +47,9 @@ class HistoryMongoTool:
         if MongoClient is None:
             raise RuntimeError('pymongo is not installed')
 
-        self.mongo_url = os.getenv('MONGO_URL', '').strip()
-        self.db_name = os.getenv('MONGO_DB_NAME', '').strip()
+        config = get_shared_config()
+        self.mongo_url = config.mongo_url
+        self.db_name = config.mongo_db_name
         if not self.mongo_url or not self.db_name:
             raise ValueError('MONGO_URL or MONGO_DB_NAME is empty')
 
@@ -69,7 +71,8 @@ _memory_history: dict[str, list[dict[str, Any]]] = defaultdict(list)
 
 def _use_mongo() -> bool:
     """判断当前环境是否应该启用 Mongo。"""
-    return bool(os.getenv('MONGO_URL', '').strip() and os.getenv('MONGO_DB_NAME', '').strip() and MongoClient is not None)
+    config = get_shared_config()
+    return bool(config.mongo_url and config.mongo_db_name and MongoClient is not None)
 
 
 def get_history_mongo_tool() -> HistoryMongoTool | None:

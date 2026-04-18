@@ -1,13 +1,10 @@
 from __future__ import annotations
 
 import logging
-import os
 import threading
 from typing import Any
 
-from dotenv import load_dotenv
-
-load_dotenv()
+from easytour.core.config import get_shared_config
 
 logger = logging.getLogger(__name__)
 
@@ -48,11 +45,12 @@ class StorageClients:
         if Minio is None:
             raise RuntimeError('minio is not installed')
 
-        endpoint = _require_env('MINIO_ENDPOINT')
-        access_key = _require_env('MINIO_ACCESS_KEY')
-        secret_key = _require_env('MINIO_SECRET_KEY')
-        secure = str(os.getenv('MINIO_SECURE', '')).strip().lower() in {'1', 'true', 'yes', 'on'}
-        bucket_name = os.getenv('MINIO_BUCKET_NAME', '').strip()
+        config = get_shared_config()
+        endpoint = _require_config_value(config.minio_endpoint, 'MINIO_ENDPOINT')
+        access_key = _require_config_value(config.minio_access_key, 'MINIO_ACCESS_KEY')
+        secret_key = _require_config_value(config.minio_secret_key, 'MINIO_SECRET_KEY')
+        secure = config.minio_secure
+        bucket_name = config.minio_bucket_name
 
         client = Minio(endpoint, access_key=access_key, secret_key=secret_key, secure=secure)
         if bucket_name:
@@ -67,11 +65,13 @@ class StorageClients:
     def _create_milvus_client(cls):
         if MilvusClient is None:
             raise RuntimeError('pymilvus is not installed')
-        return MilvusClient(uri=_require_env('MILVUS_URL'))
+        config = get_shared_config()
+        milvus_url = _require_config_value(config.milvus_url, 'MILVUS_URL')
+        return MilvusClient(uri=milvus_url)
 
 
-def _require_env(name: str) -> str:
-    value = os.getenv(name, '').strip()
-    if not value:
+def _require_config_value(value: str, name: str) -> str:
+    normalized = str(value or '').strip()
+    if not normalized:
         raise EnvironmentError(f'{name} is empty')
-    return value
+    return normalized

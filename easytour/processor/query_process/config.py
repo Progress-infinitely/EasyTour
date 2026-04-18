@@ -65,7 +65,6 @@ class QueryConfig:
     openai_api_base: str = field(default_factory=lambda: os.getenv('OPENAI_API_BASE', ''))
     openai_api_key: str = field(default_factory=lambda: os.getenv('OPENAI_API_KEY', ''))
     default_model: str = field(default_factory=lambda: os.getenv('LLM_DEFAULT_MODEL', os.getenv('MODEL', '')))
-    item_model: str = field(default_factory=lambda: os.getenv('ITEM_MODEL', ''))
     embedding_model: str = field(default_factory=lambda: os.getenv('EMBEDDING_MODEL', 'text-embedding-v4'))
     rerank_model: str = field(default_factory=lambda: os.getenv('RERANK_MODEL', 'qwen3-rerank'))
     embedding_provider: str = field(default_factory=lambda: os.getenv('EMBEDDING_PROVIDER', 'dashscope'))

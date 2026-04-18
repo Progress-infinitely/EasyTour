@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-import os
 from typing import Any, Mapping, Sequence
 
 from dotenv import load_dotenv
+
+from easytour.core.config import get_shared_config
 
 from easytour.utils.http_client import JsonHttpClient
 from easytour.utils.providers.base import (
@@ -20,10 +21,11 @@ class DashScopeEmbeddingProvider:
     _MAX_BATCH_SIZE = 10
 
     def __init__(self, http_client: JsonHttpClient | None = None):
+        config = get_shared_config()
         self._http_client = http_client or JsonHttpClient()
-        self._api_key = os.getenv('OPENAI_API_KEY') or os.getenv('DASHSCOPE_API_KEY')
+        self._api_key = config.provider_api_key
         self._base_url = self._resolve_base_url()
-        self._model_name = os.getenv('EMBEDDING_MODEL', 'text-embedding-v4')
+        self._model_name = config.embedding_model or 'text-embedding-v4'
 
         if not self._api_key:
             raise ProviderConfigError('OPENAI_API_KEY or DASHSCOPE_API_KEY is required')
@@ -126,16 +128,16 @@ class DashScopeEmbeddingProvider:
 
     @staticmethod
     def _resolve_base_url() -> str:
+        config = get_shared_config()
         explicit_base_url = (
-            os.getenv('EMBEDDING_API_BASE')
-            or os.getenv('DASHSCOPE_EMBEDDING_API_BASE')
-            or os.getenv('DASHSCOPE_HTTP_API_BASE')
-            or os.getenv('DASHSCOPE_API_BASE')
+            config.dashscope_embedding_api_base
+            or config.dashscope_http_api_base
+            or config.dashscope_api_base
         )
         if explicit_base_url:
             return explicit_base_url.rstrip('/')
 
-        compatible_base_url = os.getenv('OPENAI_API_BASE', '').rstrip('/')
+        compatible_base_url = config.openai_api_base.rstrip('/')
         if compatible_base_url.endswith('/compatible-mode/v1'):
             return compatible_base_url[: -len('/compatible-mode/v1')] + '/api/v1'
         if compatible_base_url:

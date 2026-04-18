@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-import os
 import re
 from typing import Any, Mapping, Sequence
 
 from dotenv import load_dotenv
+
+from easytour.core.config import get_shared_config
 
 from easytour.utils.http_client import JsonHttpClient
 from easytour.utils.providers.base import (
@@ -18,10 +19,11 @@ load_dotenv()
 
 class DashScopeRerankProvider:
     def __init__(self, http_client: JsonHttpClient | None = None):
+        config = get_shared_config()
         self._http_client = http_client or JsonHttpClient()
-        self._api_key = os.getenv('OPENAI_API_KEY') or os.getenv('DASHSCOPE_API_KEY')
+        self._api_key = config.provider_api_key
         self._base_url = self._resolve_base_url()
-        self._model_name = os.getenv('RERANK_MODEL', 'qwen3-rerank')
+        self._model_name = config.rerank_model or 'qwen3-rerank'
         if not self._api_key:
             raise ProviderConfigError('OPENAI_API_KEY or DASHSCOPE_API_KEY is required')
 
@@ -135,15 +137,16 @@ class DashScopeRerankProvider:
 
     @staticmethod
     def _resolve_base_url() -> str:
+        config = get_shared_config()
         explicit_base_url = (
-            os.getenv('DASHSCOPE_RERANK_API_BASE')
-            or os.getenv('DASHSCOPE_HTTP_API_BASE')
-            or os.getenv('DASHSCOPE_API_BASE')
+            config.dashscope_rerank_api_base
+            or config.dashscope_http_api_base
+            or config.dashscope_api_base
         )
         if explicit_base_url:
             return explicit_base_url.rstrip('/')
 
-        compatible_base_url = os.getenv('OPENAI_API_BASE', '').rstrip('/')
+        compatible_base_url = config.openai_api_base.rstrip('/')
         if compatible_base_url.endswith('/compatible-mode/v1'):
             return compatible_base_url[: -len('/compatible-mode/v1')] + '/api/v1'
         if compatible_base_url:
@@ -152,14 +155,15 @@ class DashScopeRerankProvider:
 
     @staticmethod
     def _resolve_compatible_rerank_base_url() -> str:
+        config = get_shared_config()
         explicit_base_url = (
-            os.getenv('DASHSCOPE_RERANK_COMPATIBLE_API_BASE')
-            or os.getenv('DASHSCOPE_COMPATIBLE_API_BASE')
+            config.dashscope_rerank_compatible_api_base
+            or config.dashscope_compatible_api_base
         )
         if explicit_base_url:
             return explicit_base_url.rstrip('/')
 
-        compatible_base_url = os.getenv('OPENAI_API_BASE', '').rstrip('/')
+        compatible_base_url = config.openai_api_base.rstrip('/')
         if compatible_base_url.endswith('/compatible-mode/v1'):
             return compatible_base_url[: -len('/compatible-mode/v1')] + '/compatible-api/v1'
         if compatible_base_url.endswith('/compatible-api/v1'):

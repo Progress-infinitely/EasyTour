@@ -75,7 +75,6 @@ class ImportConfig:
     # - OPENAI_API_BASE
     # - OPENAI_API_KEY
     # - VL_MODEL
-    # - ITEM_MODEL
     # - LLM_DEFAULT_MODEL
     #
     # 这些字段主要影响：
@@ -85,7 +84,6 @@ class ImportConfig:
     openai_api_base: str = field(default_factory=lambda: os.getenv('OPENAI_API_BASE', ''))
     openai_api_key: str = field(default_factory=lambda: os.getenv('OPENAI_API_KEY', ''))
     vl_model: str = field(default_factory=lambda: os.getenv('VL_MODEL', ''))
-    item_model: str = field(default_factory=lambda: os.getenv('ITEM_MODEL', ''))
     default_model: str = field(default_factory=lambda: os.getenv('MODEL', ''))
     llm_default_model: str = field(default_factory=lambda: os.getenv('LLM_DEFAULT_MODEL', os.getenv('MODEL', '')))
 

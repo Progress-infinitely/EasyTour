@@ -2,15 +2,15 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 import random
 import threading
 import time
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Mapping
 from urllib import error, request
 
+from easytour.core.config import get_shared_config
 
 logger = logging.getLogger(__name__)
 
@@ -30,11 +30,22 @@ class HttpClientConfig:
     它们不是业务逻辑本身，但会直接影响系统稳定性。
     """
 
-    timeout_seconds: float = field(default_factory=lambda: float(os.getenv('HTTP_TIMEOUT_SECONDS', '30')))
-    max_retries: int = field(default_factory=lambda: int(os.getenv('HTTP_MAX_RETRIES', '3')))
-    base_backoff_seconds: float = field(default_factory=lambda: float(os.getenv('HTTP_RETRY_BASE_SECONDS', '0.6')))
-    max_backoff_seconds: float = field(default_factory=lambda: float(os.getenv('HTTP_RETRY_MAX_SECONDS', '8')))
-    max_concurrency: int = field(default_factory=lambda: int(os.getenv('HTTP_MAX_CONCURRENCY', '4')))
+    timeout_seconds: float = 30.0
+    max_retries: int = 3
+    base_backoff_seconds: float = 0.6
+    max_backoff_seconds: float = 8.0
+    max_concurrency: int = 4
+
+    @classmethod
+    def from_shared_config(cls) -> 'HttpClientConfig':
+        config = get_shared_config()
+        return cls(
+            timeout_seconds=float(config.http_timeout_seconds),
+            max_retries=int(config.http_max_retries),
+            base_backoff_seconds=float(config.http_retry_base_seconds),
+            max_backoff_seconds=float(config.http_retry_max_seconds),
+            max_concurrency=int(config.http_max_concurrency),
+        )
 
 
 class HttpClientError(RuntimeError):
@@ -82,7 +93,7 @@ class JsonHttpClient:
     _RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
 
     def __init__(self, config: HttpClientConfig | None = None):
-        self.config = config or HttpClientConfig()
+        self.config = config or HttpClientConfig.from_shared_config()
         self._semaphore = threading.BoundedSemaphore(self.config.max_concurrency)
 
     def post_json(

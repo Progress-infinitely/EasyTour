@@ -122,28 +122,6 @@ class QueryService:
                 push_sse_event(task_id, SSEEvent.ERROR, {'error': str(exc)})
             raise
 
-    def run_query_graph(
-        self,
-        task_id: str,
-        session_id: str,
-        query: str,
-        is_stream: bool,
-        message_id: str = '',
-        history: list[dict[str, Any]] | None = None,
-        retrieval_type: str | None = None,
-        region: str | None = None,
-    ) -> dict[str, Any]:
-        return self.run_query(
-            query=query,
-            session_id=session_id,
-            task_id=task_id,
-            message_id=message_id or None,
-            history=history,
-            is_stream=is_stream,
-            retrieval_type=retrieval_type,
-            region=region,
-        )
-
     def get_history(self, session_id: str, limit: int = 50) -> list[dict[str, Any]]:
         return get_recent_messages(session_id, limit)
 
